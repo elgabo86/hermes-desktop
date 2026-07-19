@@ -75,17 +75,22 @@ chmod +x squashfs-root/usr/bin/auto-update
 echo ">>> Patch de l'AppRun..."
 APPRUN="squashfs-root/AppRun"
 
-if grep -q "auto-update" "$APPRUN" 2>/dev/null; then
-    echo "  AppRun déjà patché, on saute."
+if grep -q 'auto-update.*&' "$APPRUN" 2>/dev/null; then
+    echo "  AppRun déjà patché (background), on saute."
 else
+    # Nettoyer un éventuel ancien patch (sans background)
+    sed -i '/^# ── Auto-update check/d' "$APPRUN"
+    sed -i '/^if.*auto-update.*then$/,/^fi$/d' "$APPRUN" 2>/dev/null || true
+    sed -i '/^if.*auto-update.*then$/,/^fi$/d' "$APPRUN" 2>/dev/null || true
+    # Injecter le nouveau patch
     cat >> "$APPRUN" << 'HERMES_UPDATE_INJECT'
 
 # ── Auto-update check (injected) ──
 if [ -x "$APPDIR/usr/bin/auto-update" ]; then
-    "$APPDIR/usr/bin/auto-update" "$@" || true
+    "$APPDIR/usr/bin/auto-update" "$@" &
 fi
 HERMES_UPDATE_INJECT
-    echo "  AppRun patché."
+    echo "  AppRun patché (background)."
 fi
 
 # ── Étape 4: Reconstruire le SquashFS ───────────────────────────
