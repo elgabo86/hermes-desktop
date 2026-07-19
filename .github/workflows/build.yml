@@ -35,7 +35,7 @@ jobs:
       - name: Get version
         id: version
         run: |
-          VERSION=$(basename dist/Hermes-*.AppImage | sed 's/Hermes-\(.*\)-linux.*/\1/')
+          VERSION=$(basename dist/hermes-desktop-*.AppImage | sed 's/hermes-desktop-\(.*\)-x86_64.*/\1/')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Delete existing tag (if any)
@@ -50,6 +50,6 @@ jobs:
           tag_name: "v${{ steps.version.outputs.version }}"
           name: "Hermes Desktop ${{ steps.version.outputs.version }}"
           files: |
-            dist/Hermes-*.AppImage
-            dist/Hermes-*.AppImage.zsync
+            dist/hermes-desktop-*.AppImage
+            dist/hermes-desktop-*.AppImage.zsync
           fail_on_unmatched_files: true

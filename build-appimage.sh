@@ -59,12 +59,19 @@ fi
 cp "$APPIMAGE" "$OUTPUT_DIR/"
 echo "=== Build done: $OUTPUT_DIR/$(basename "$APPIMAGE") ==="
 
+# Renommer en hermes-desktop
+VERSION=$(echo "$(basename "$APPIMAGE")" | sed -n 's/^Hermes-\([0-9.]*\)-linux.*/\1/p')
+NEWNAME="hermes-desktop-${VERSION}-x86_64.AppImage"
+mv "$OUTPUT_DIR/$(basename "$APPIMAGE")" "$OUTPUT_DIR/$NEWNAME"
+echo ">>> Renommé: $OUTPUT_DIR/$NEWNAME"
+APPIMAGE_NAME="$NEWNAME"
+
 # ── Post-processing: injecter l'auto-update ─────────────────────
 
 POST_PROCESS="$SCRIPT_DIR/post-process-appimage.sh"
 if [ -x "$POST_PROCESS" ]; then
     echo ">>> Post-processing (auto-updater)..."
-    ORIGINAL="$OUTPUT_DIR/$(basename "$APPIMAGE")"
+    ORIGINAL="$OUTPUT_DIR/$APPIMAGE_NAME"
     "$POST_PROCESS" "$ORIGINAL"
     echo ">>> Post-processing terminé."
 else

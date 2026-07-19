@@ -90,7 +90,7 @@ check_and_update() {
 
     # Récupérer la version actuelle depuis le nom du fichier
     local current_version
-    current_version=$(echo "$(basename "$APPIMAGE")" | sed -n 's/^Hermes-\([0-9.]*\)-linux.*/\1/p')
+    current_version=$(echo "$(basename "$APPIMAGE")" | sed -n 's/^hermes-desktop-\([0-9.]*\)-x86_64.*/\1/p')
     if [ -z "$current_version" ]; then
         return 0
     fi

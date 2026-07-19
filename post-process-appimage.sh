@@ -111,7 +111,7 @@ chmod +x "$OUTPUT"
 
 echo ">>> Injection de l'updateinformation..."
 # Format: gh-releases-zsync|USER|REPO|latest|PATTERN.zsync
-UPDATE_INFO="gh-releases-zsync|${GITHUB_USER}|${GITHUB_REPO}|latest|Hermes-*-x86_64.AppImage.zsync"
+UPDATE_INFO="gh-releases-zsync|${GITHUB_USER}|${GITHUB_REPO}|latest|hermes-desktop-*-x86_64.AppImage.zsync"
 
 # AppImage update information format: magic 'AI\x02' + string
 printf 'AI\x02%s' "$UPDATE_INFO" >> "$OUTPUT"
@@ -120,7 +120,7 @@ echo "  Update info: $UPDATE_INFO"
 # ── Étape 7: Générer le .zsync ───────────────────────────────────
 
 echo ">>> Génération du .zsync..."
-VERSION=$(echo "$BASENAME" | sed -n 's/^Hermes-\([0-9.]*\)-linux.*/\1/p')
+VERSION=$(echo "$BASENAME" | sed -n 's/^hermes-desktop-\([0-9.]*\)-x86_64/\1/p')
 DL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/v${VERSION}/${BASENAME}.AppImage"
 
 zsyncmake \
