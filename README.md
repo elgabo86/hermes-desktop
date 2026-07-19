@@ -25,8 +25,17 @@ chmod +x Hermes.AppImage
 
 ## Updates
 
-The AppImage is NOT auto-updated by Hermes Desktop's built-in updater.
-To update, download the latest release.
+L'AppImage intègre un **auto-updater** qui vérifie les mises à jour au lancement.
+Si une nouvelle version est disponible :
+- **Delta update** automatique (quelques Mo au lieu de 135 Mo) grâce à [AppImageUpdate](https://github.com/AppImage/AppImageUpdate)
+- Une boîte de dialogue propose la mise à jour (zenity/kdialog)
+- L'AppImage se met à jour toute seule et redémarre
+
+L'outil de mise à jour (`appimageupdatetool`) est téléchargé automatiquement à la première
+mise à jour et mis en cache dans `~/.cache/hermes-updater/`.
+
+**Avec AppImageLauncher** (optionnel) : si vous avez [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher)
+installé, il gère les mises à jour automatiquement en arrière-plan — rien à configurer.
 
 ## Manual build
 
