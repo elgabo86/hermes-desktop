@@ -10,6 +10,9 @@ on:
         default: 'main'
         required: false
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -30,6 +33,12 @@ jobs:
         run: |
           VERSION=$(basename dist/Hermes-*.AppImage | sed 's/Hermes-\(.*\)-linux.*/\1/')
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Delete existing tag (if any)
+        run: |
+          gh release delete "v${{ steps.version.outputs.version }}" --yes --cleanup-tag 2>/dev/null || true
+        env:
+          GH_TOKEN: ${{ github.token }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
