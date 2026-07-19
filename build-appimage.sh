@@ -65,17 +65,6 @@ POST_PROCESS="$SCRIPT_DIR/post-process-appimage.sh"
 if [ -x "$POST_PROCESS" ]; then
     echo ">>> Post-processing (auto-updater)..."
     ORIGINAL="$OUTPUT_DIR/$(basename "$APPIMAGE")"
-    # Installer appimagetool si nécessaire
-    APPIMAGETOOL="/tmp/appimagetool/appimagetool"
-    if [ ! -x "$APPIMAGETOOL" ]; then
-        echo "Téléchargement d'appimagetool..."
-        mkdir -p "$(dirname "$APPIMAGETOOL")"
-        curl -sSL --connect-timeout 30 \
-            "https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage" \
-            -o "$APPIMAGETOOL"
-        chmod +x "$APPIMAGETOOL"
-    fi
-    export PATH="$PATH:$(dirname "$APPIMAGETOOL")"
     "$POST_PROCESS" "$ORIGINAL"
     echo ">>> Post-processing terminé."
 else

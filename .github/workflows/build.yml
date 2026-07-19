@@ -28,9 +28,9 @@ jobs:
           chmod +x build-appimage.sh
           ./build-appimage.sh "${{ inputs.upstream_ref || 'main' }}"
 
-      - name: Install zsync (for AppImage delta updates)
+      - name: Install build dependencies (zsync + squashfs-tools)
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq zsync
+          sudo apt-get update -qq && sudo apt-get install -y -qq zsync squashfs-tools
 
       - name: Get version
         id: version

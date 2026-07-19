@@ -2,9 +2,8 @@
 # post-process-appimage.sh — Injecte l'auto-update dans l'AppImage Hermes Desktop
 # Usage: ./post-process-appimage.sh <input.AppImage>
 #
-# Prérequis: appimagetool, zsyncmake (dans le PATH)
-#   - appimagetool: https://github.com/AppImage/AppImageKit/releases
-#   - zsyncmake: brew install zsync (ou paquet système)
+# N'utilise PAS appimagetool (AppImageKit est archivé).
+# Reconstruit manuellement avec mksquashfs + injection d'updateinformation.
 
 set -euo pipefail
 
@@ -27,9 +26,37 @@ ZS_OUTPUT="$OUTPUT_DIR/$BASENAME.AppImage.zsync"
 echo "=== Post-processing $BASENAME ==="
 echo "Work dir: $WORK_DIR"
 
-# ── Étape 1: Extraire l'AppImage ────────────────────────────────
+# Vérifier les outils requis
+for tool in mksquashfs zsyncmake; do
+    if ! command -v "$tool" &>/dev/null; then
+        echo "ERREUR: $tool introuvable. Installez-le (apt install squashfs-tools zsync)."
+        exit 1
+    fi
+done
 
-echo ">>> Extraction..."
+# ── Étape 1: Extraire le runtime et le SquashFS ─────────────────
+
+echo ">>> Extraction du runtime..."
+
+# Trouver l'offset du SquashFS. Le magic 'hsqs' peut apparaître plusieurs fois.
+# On prend la DERNIÈRE occurrence (la plus loin dans le fichier) qui est le vrai
+# début du système de fichiers SquashFS.
+OFFSET=$(strings -t d "$INPUT" | grep "hsqs" | awk '{print $1}' | sort -n | tail -1)
+if [ -z "$OFFSET" ] || [ "$OFFSET" -lt 100000 ]; then
+    echo "ERREUR: impossible de trouver l'offset SquashFS dans $INPUT"
+    echo "  Occurences trouvées:"
+    strings -t d "$INPUT" | grep "hsqs"
+    exit 1
+fi
+echo "  Offset SquashFS: $OFFSET"
+
+# Extraire le runtime (tout avant le SquashFS)
+echo ">>> Extraction du runtime ($OFFSET bytes)..."
+dd if="$INPUT" of="$WORK_DIR/runtime" bs=1 count="$OFFSET" 2>/dev/null
+chmod +x "$WORK_DIR/runtime"
+
+# Extraire le contenu de l'AppImage
+echo ">>> Extraction du contenu..."
 cp "$INPUT" "$WORK_DIR/original.AppImage"
 chmod +x "$WORK_DIR/original.AppImage"
 cd "$WORK_DIR"
@@ -46,84 +73,78 @@ chmod +x squashfs-root/usr/bin/auto-update
 # ── Étape 3: Patcher l'AppRun ───────────────────────────────────
 
 echo ">>> Patch de l'AppRun..."
-# On insère l'appel à auto-update juste avant la fin du script,
-# après le bloc if [ -z "$APPIMAGE" ] (avant que le script ne quitte
-# et que le trap atexit ne se déclenche).
-#
-# On cherche la fin du fichier et on insère avant la dernière ligne vide.
-
 APPRUN="squashfs-root/AppRun"
 
-# Vérifier que le script auto-update n'est pas déjà présent
 if grep -q "auto-update" "$APPRUN" 2>/dev/null; then
-    echo "AppRun déjà patché, on saute."
+    echo "  AppRun déjà patché, on saute."
 else
-    # Insérer l'appel avant les dernières lignes vides
-    # Stratégie: ajouter après la définition de APPIMAGE
     cat >> "$APPRUN" << 'HERMES_UPDATE_INJECT'
 
-# ── Auto-update check (injected by post-process-appimage.sh) ──
+# ── Auto-update check (injected) ──
 if [ -x "$APPDIR/usr/bin/auto-update" ]; then
     "$APPDIR/usr/bin/auto-update" "$@" || true
 fi
 HERMES_UPDATE_INJECT
-    echo "AppRun patché."
+    echo "  AppRun patché."
 fi
 
-# ── Étape 4: Re-packager avec updateinformation ──────────────────
+# ── Étape 4: Reconstruire le SquashFS ───────────────────────────
 
-echo ">>> Re-packaging avec appimagetool..."
-APPMAGETOOL=$(command -v appimagetool 2>/dev/null || echo "/tmp/appimagetool/appimagetool")
+echo ">>> Reconstruction du SquashFS..."
+mksquashfs squashfs-root "$WORK_DIR/new.squashfs" \
+    -comp xz \
+    -noappend \
+    -no-progress 2>&1 | tail -3
 
-# Vérifier qu'appimagetool est dispo
-if ! "$APPMAGETOOL" --version &>/dev/null; then
-    echo "ERREUR: appimagetool introuvable. Téléchargez-le depuis:"
-    echo "  https://github.com/AppImage/AppImageKit/releases"
+# ── Étape 5: Assembler l'AppImage ───────────────────────────────
+
+echo ">>> Assemblage de l'AppImage..."
+cat "$WORK_DIR/runtime" "$WORK_DIR/new.squashfs" > "$OUTPUT"
+chmod +x "$OUTPUT"
+
+# ── Étape 6: Injecter l'updateinformation ───────────────────────
+
+echo ">>> Injection de l'updateinformation..."
+# Format: gh-releases-zsync|USER|REPO|latest|PATTERN.zsync
+UPDATE_INFO="gh-releases-zsync|${GITHUB_USER}|${GITHUB_REPO}|latest|Hermes-*-x86_64.AppImage.zsync"
+
+# AppImage update information format: magic 'AI\x02' + string
+printf 'AI\x02%s' "$UPDATE_INFO" >> "$OUTPUT"
+echo "  Update info: $UPDATE_INFO"
+
+# ── Étape 7: Générer le .zsync ───────────────────────────────────
+
+echo ">>> Génération du .zsync..."
+VERSION=$(echo "$BASENAME" | sed -n 's/^Hermes-\([0-9.]*\)-linux.*/\1/p')
+DL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/v${VERSION}/${BASENAME}.AppImage"
+
+zsyncmake \
+    -u "$DL_URL" \
+    -o "$ZS_OUTPUT" \
+    "$OUTPUT" 2>&1
+
+echo "  .zsync: $ZS_OUTPUT"
+
+# ── Étape 8: Vérification ───────────────────────────────────────
+
+echo ">>> Vérification..."
+if [ -x "$OUTPUT" ] && [ -f "$ZS_OUTPUT" ]; then
+    echo "✅ OK"
+else
+    echo "❌ ERREUR: fichiers manquants"
     exit 1
 fi
 
-# Le format pour GitHub Releases:
-#   gh-releases-zsync|USER|REPO|latest|PATTERN.zsync
-UPDATE_INFO="gh-releases-zsync|${GITHUB_USER}|${GITHUB_REPO}|latest|Hermes-*-x86_64.AppImage.zsync"
-
-echo "Update information: $UPDATE_INFO"
-
-# L'appimagetool téléchargé est lui-même une AppImage.
-# Pour le CI (qui peut ne pas avoir FUSE), on utilise APPIMAGE_EXTRACT_AND_RUN.
-if file "$APPMAGETOOL" | grep -q "AppImage"; then
-    export APPIMAGE_EXTRACT_AND_RUN=1
-fi
-
-# Supprimer l'ancienne AppImage de sortie si elle existe
-rm -f "$OUTPUT" "$ZS_OUTPUT"
-
-"$APPMAGETOOL" \
-    --updateinformation "$UPDATE_INFO" \
-    --comp xz \
-    squashfs-root \
-    "$OUTPUT"
-
-echo "Nouvelle AppImage: $OUTPUT"
-
-# ── Étape 5: Vérifier que le .zsync a été généré ─────────────────
-
-if [ -f "$ZS_OUTPUT" ]; then
-    echo ">>> .zsync généré: $ZS_OUTPUT"
-    ls -lh "$ZS_OUTPUT"
-else
-    echo ">>> Génération manuelle du .zsync..."
-    zsyncmake \
-        -u "https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/latest/download/Hermes-${BASENAME#Hermes-}.AppImage" \
-        -o "$ZS_OUTPUT" \
-        "$OUTPUT"
-    echo ".zsync généré manuellement."
+# Vérifier que l'updateinformation est lisible
+if strings "$OUTPUT" | grep -q "gh-releases-zsync"; then
+    echo "  Update info présente dans l'AppImage."
 fi
 
 # ── Nettoyage ───────────────────────────────────────────────────
 
 echo ">>> Nettoyage..."
 rm -rf "$WORK_DIR"
+
 echo "=== Terminé ==="
-echo ""
 echo "Fichiers produits:"
 ls -lh "$OUTPUT" "$ZS_OUTPUT"
