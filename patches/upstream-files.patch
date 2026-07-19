@@ -1,0 +1,195 @@
+diff --git a/apps/desktop/src/i18n/catalog.ts b/apps/desktop/src/i18n/catalog.ts
+index 19556cb45..09362b5ae 100644
+--- a/apps/desktop/src/i18n/catalog.ts
++++ b/apps/desktop/src/i18n/catalog.ts
+@@ -1,4 +1,5 @@
+ import { en } from './en'
++import { fr } from './fr'
+ import { ja } from './ja'
+ import type { Locale, Translations } from './types'
+ import { zh } from './zh'
+@@ -6,6 +7,7 @@ import { zhHant } from './zh-hant'
+ 
+ export const TRANSLATIONS: Record<Locale, Translations> = {
+   en,
++  fr,
+   zh,
+   'zh-hant': zhHant,
+   ja
+diff --git a/apps/desktop/src/i18n/en.ts b/apps/desktop/src/i18n/en.ts
+index 7765c0f74..c531c4f71 100644
+--- a/apps/desktop/src/i18n/en.ts
++++ b/apps/desktop/src/i18n/en.ts
+@@ -69,7 +69,9 @@ export const en: Translations = {
+       loadingSettings: 'Loading Hermes settings',
+       loadingSessions: 'Loading recent sessions',
+       startingDesktopConnection: 'Starting desktop connection',
+-      startingHermesDesktop: 'Starting Hermes Desktop…'
++      startingHermesDesktop: 'Starting Hermes Desktop…',
++      connectingPrefix: 'Connecting',
++      connectingTail: '…',
+     },
+     errors: {
+       backgroundExited: 'Hermes background process exited.',
+@@ -727,6 +729,7 @@ export const en: Translations = {
+       defaultsFailed: 'Failed to save model defaults',
+       auxiliaryTitle: 'Auxiliary models',
+       resetAllToMain: 'Reset all to main',
++      staleAuxWarning: (count, names, provider) => `${count} auxiliary task${count === 1 ? '' : 's'} (${names}) still run on ${provider}, not your main model.`,
+       auxiliaryDesc: 'Helper tasks run on the main model by default. Assign a dedicated model to any task to override.',
+       setToMain: 'Set to main',
+       change: 'Change',
+@@ -2661,5 +2664,22 @@ export const en: Translations = {
+       description: 'Displays the mobile sidebar.',
+       toggle: 'Toggle Sidebar'
+     }
++  },
++
++  uninstall: {
++    dangerZone: 'Danger Zone',
++    checking: 'Checking…',
++    confirmTitle: 'Uninstall Hermes',
++    confirmBody: (consequence: string) => `This will ${consequence}. Are you sure?`,
++    uninstalling: 'Uninstalling…',
++    yesUninstall: 'Yes, Uninstall',
++    cancel: 'Cancel',
++    uninstallHermes: 'Uninstall Hermes',
++    uninstallDescription: 'This will remove Hermes from your system. Choose an option below.',
++    options: {
++      gui: { title: 'GUI Only', description: 'Remove the desktop app but keep your data and agent.', consequence: 'remove the Hermes desktop application' },
++      lite: { title: 'Lite', description: 'Remove the app and your Hermes configuration.', consequence: 'remove Hermes Desktop and your configuration' },
++      full: { title: 'Full', description: 'Remove everything including all Hermes data.', consequence: 'remove Hermes Desktop, configuration, and all data' }
++    }
+   }
+ }
+diff --git a/apps/desktop/src/i18n/languages.ts b/apps/desktop/src/i18n/languages.ts
+index 96daf9b59..2ed3bb9e5 100644
+--- a/apps/desktop/src/i18n/languages.ts
++++ b/apps/desktop/src/i18n/languages.ts
+@@ -11,6 +11,12 @@ export const LOCALE_OPTIONS = [
+     englishName: 'English',
+     configValue: 'en'
+   },
++  {
++    id: 'fr',
++    name: 'Français',
++    englishName: 'French',
++    configValue: 'fr'
++  },
+   {
+     id: 'zh',
+     name: '简体中文',
+@@ -43,6 +49,15 @@ const LOCALE_ALIASES: Record<string, Locale> = {
+   en: 'en',
+   'en-us': 'en',
+   en_us: 'en',
++  fr: 'fr',
++  'fr-fr': 'fr',
++  fr_fr: 'fr',
++  'fr-ca': 'fr',
++  fr_ca: 'fr',
++  'fr-be': 'fr',
++  fr_be: 'fr',
++  'fr-ch': 'fr',
++  fr_ch: 'fr',
+   zh: 'zh',
+   'zh-cn': 'zh',
+   zh_cn: 'zh',
+diff --git a/apps/desktop/src/i18n/types.ts b/apps/desktop/src/i18n/types.ts
+index 40f224f2b..71c361e64 100644
+--- a/apps/desktop/src/i18n/types.ts
++++ b/apps/desktop/src/i18n/types.ts
+@@ -5,7 +5,7 @@
+ // partial locales should use `defineLocale()` so missing desktop-only strings
+ // fall back to English while new keys remain type-checked.
+ 
+-export type Locale = 'en' | 'zh' | 'zh-hant' | 'ja'
++export type Locale = 'en' | 'fr' | 'zh' | 'zh-hant' | 'ja'
+ 
+ export type ToolTitleKey =
+   | 'browser_click'
+@@ -115,6 +115,8 @@ export interface Translations {
+       loadingSessions: string
+       startingDesktopConnection: string
+       startingHermesDesktop: string
++      connectingPrefix: string
++      connectingTail: string
+     }
+     errors: {
+       backgroundExited: string
+@@ -629,6 +631,7 @@ export interface Translations {
+       defaultsFailed: string
+       auxiliaryTitle: string
+       resetAllToMain: string
++      staleAuxWarning: (count: number, names: string, provider: string) => string
+       auxiliaryDesc: string
+       setToMain: string
+       change: string
+@@ -2244,4 +2247,21 @@ export interface Translations {
+       toggle: string
+     }
+   }
++
++  uninstall: {
++    dangerZone: string
++    checking: string
++    confirmTitle: string
++    confirmBody: (consequence: string) => string
++    uninstalling: string
++    yesUninstall: string
++    cancel: string
++    uninstallHermes: string
++    uninstallDescription: string
++    options: {
++      gui: { title: string; description: string; consequence: string }
++      lite: { title: string; description: string; consequence: string }
++      full: { title: string; description: string; consequence: string }
++    }
++  }
+ }
+diff --git a/apps/desktop/src/i18n/zh.ts b/apps/desktop/src/i18n/zh.ts
+index 07c01b739..28a872e52 100644
+--- a/apps/desktop/src/i18n/zh.ts
++++ b/apps/desktop/src/i18n/zh.ts
+@@ -69,7 +69,9 @@ export const zh: Translations = {
+       loadingSettings: '正在加载 Hermes 设置',
+       loadingSessions: '正在加载最近会话',
+       startingDesktopConnection: '正在启动桌面连接',
+-      startingHermesDesktop: '正在启动 Hermes 桌面版…'
++      startingHermesDesktop: '正在启动 Hermes 桌面版…',
++      connectingPrefix: 'Connecting',
++      connectingTail: '…',
+     },
+     errors: {
+       backgroundExited: 'Hermes 后台进程已退出。',
+@@ -921,6 +923,7 @@ export const zh: Translations = {
+       defaultsFailed: '保存模型默认值失败',
+       auxiliaryTitle: '辅助模型',
+       resetAllToMain: '全部重置为主模型',
++      staleAuxWarning: (count, names, provider) => `${count} 个辅助任务 (${names}) 仍在 ${provider} 上运行，而非您的主模型。`,
+       auxiliaryDesc: '辅助任务默认使用主模型。你可以为任意任务指定专用模型。',
+       setToMain: '设为主模型',
+       change: '更改',
+@@ -2811,5 +2814,22 @@ export const zh: Translations = {
+       description: '显示移动端侧边栏。',
+       toggle: '切换侧边栏'
+     }
++  },
++
++  uninstall: {
++    dangerZone: '危险区域',
++    checking: '正在检查…',
++    confirmTitle: '卸载 Hermes',
++    confirmBody: (consequence: string) => `这将${consequence}。你确定吗？`,
++    uninstalling: '正在卸载…',
++    yesUninstall: '是的，卸载',
++    cancel: '取消',
++    uninstallHermes: '卸载 Hermes',
++    uninstallDescription: '这将从你的系统中移除 Hermes。请选择以下选项。',
++    options: {
++      gui: { title: '仅 GUI', description: '移除桌面应用但保留数据和代理。', consequence: '移除 Hermes 桌面应用' },
++      lite: { title: '精简', description: '移除应用和 Hermes 配置。', consequence: '移除 Hermes 桌面和配置' },
++      full: { title: '完全', description: '移除所有内容，包括所有 Hermes 数据。', consequence: '移除 Hermes 桌面、配置和所有数据' }
++    }
+   }
+ }

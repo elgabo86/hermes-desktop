@@ -1,0 +1,40 @@
+name: Build AppImage
+
+on:
+  schedule:
+    - cron: '0 6 */2 * *'  # tous les 2 jours à 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      upstream_ref:
+        description: 'Upstream ref (branch, tag, commit)'
+        default: 'main'
+        required: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Build AppImage
+        run: |
+          chmod +x build-appimage.sh
+          ./build-appimage.sh "${{ inputs.upstream_ref || 'main' }}"
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(basename dist/Hermes-*.AppImage | sed 's/Hermes-\(.*\)-linux.*/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: "v${{ steps.version.outputs.version }}"
+          name: "Hermes Desktop ${{ steps.version.outputs.version }}"
+          files: dist/Hermes-*.AppImage
+          fail_on_unmatched_files: true
