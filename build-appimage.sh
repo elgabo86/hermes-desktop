@@ -38,7 +38,7 @@ fi
 
 # 2. Patch upstream (en.ts, zh.ts — clés manquantes dans l'upstream)
 if [ -f "$SCRIPT_DIR/patches/upstream-files.patch" ]; then
-  git apply --3way "$SCRIPT_DIR/patches/upstream-files.patch" || {
+  git apply "$SCRIPT_DIR/patches/upstream-files.patch" || {
     echo "ERROR: upstream-files.patch failed to apply."
     echo "Update the patch and retry."
     exit 1
