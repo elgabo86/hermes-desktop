@@ -99,29 +99,55 @@ check_and_update() {
     echo "Vérification des mises à jour..."
     local latest_json
     latest_json=$(curl -sS --connect-timeout 10 \
+        -H "Accept: application/vnd.github.v3+json" \
         "https://api.github.com/repos/${GITHUB_USER}/${GITHUB_REPO}/releases/latest" 2>/dev/null || true)
 
     if [ -z "$latest_json" ]; then
         return 0  # Pas de réseau, on ignore silencieusement
     fi
 
-    # Extraire le tag (sans le préfixe 'v')
-    local tag_name
-    tag_name=$(echo "$latest_json" | grep -oP '"tag_name":\s*"v?\K[^"]+' | head -1)
-    if [ -z "$tag_name" ]; then
+    # Extraire la date de publication et l'URL de l'asset zsync
+    local published_at
+    published_at=$(echo "$latest_json" | grep -oP '"published_at":\s*"\K[^"]+' | head -1)
+    local zsync_url
+    zsync_url=$(echo "$latest_json" | grep -oP '"browser_download_url":\s*"\K[^"]*\.zsync' | head -1)
+
+    if [ -z "$published_at" ] || [ -z "$zsync_url" ]; then
         return 0
     fi
 
-    # Comparer les versions
-    if [ "$tag_name" = "$current_version" ]; then
+    # Télécharger le .zsync le plus récent pour comparer les checksums
+    local remote_zsync
+    remote_zsync=$(curl -sS --connect-timeout 10 "$zsync_url" 2>/dev/null || true)
+    if [ -z "$remote_zsync" ]; then
+        return 0
+    fi
+
+    # Extraire le SHA-1 du .zsync distant
+    local remote_sha
+    remote_sha=$(echo "$remote_zsync" | grep -oP 'SHA1=\K[a-f0-9]+' | head -1)
+    if [ -z "$remote_sha" ]; then
+        return 0
+    fi
+
+    # Calculer le SHA-1 de l'AppImage locale (seules les 16 premières lignes, rapide)
+    local local_sha
+    local_sha=$(head -c 1048576 "$APPIMAGE" 2>/dev/null | sha1sum | awk '{print $1}')
+    local local_full_sha
+    local_full_sha=$(sha1sum "$APPIMAGE" 2>/dev/null | awk '{print $1}')
+
+    # Comparer les checksums
+    if [ "$local_full_sha" = "$remote_sha" ]; then
         echo "Hermes Desktop est à jour (v${current_version})."
         return 0
     fi
 
-    # Nouvelle version disponible
-    echo "Nouvelle version disponible : v${tag_name} (actuelle : v${current_version})"
+    # Une mise à jour est disponible
+    local tag_name
+    tag_name=$(echo "$latest_json" | grep -oP '"tag_name":\s*"v?\K[^"]+' | head -1)
+    echo "Nouvelle version disponible (${tag_name:-$current_version}, $(echo "$published_at" | cut -dT -f1))"
 
-    if ! ask_update "$tag_name"; then
+    if ! ask_update "${tag_name:-$current_version}"; then
         echo "Mise à jour repoussée."
         return 0
     fi
@@ -135,15 +161,13 @@ check_and_update() {
         }
     fi
 
-    # Lancer la mise à jour
+    # Lancer la mise à jour (delta via zsync)
     echo "Mise à jour en cours..."
     show_progress "Téléchargement de la mise à jour..."
 
     "$UPDATE_TOOL" "$APPIMAGE" && {
         hide_progress
         echo "✅ Mise à jour terminée. L'application va redémarrer."
-        # L'AppImage a été remplacée, le runtime AppImage relance la nouvelle version
-        # L'atexit du script principal ne sera pas atteint car exec a déjà eu lieu
         show_info "Mise à jour terminée !\n\nHermes Desktop va redémarrer avec la nouvelle version."
         exec "$APPIMAGE" "$@"
         exit 0
