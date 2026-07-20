@@ -75,6 +75,23 @@ chmod +x squashfs-root/usr/bin/auto-update
 echo ">>> Patch de l'AppRun..."
 APPRUN="squashfs-root/AppRun"
 
+# ── Injecter le PATH brew si nécessaire (pour le rebuild desktop) ──
+# Sans ça, 'hermes desktop --build-only' ne trouve pas npm sur les systèmes
+# où Node.js est installé via Homebrew (ex: Fedora Kinoite).
+if ! grep -q 'linuxbrew.*PATH' "$APPRUN" 2>/dev/null; then
+    # Insère après la ligne 'export PATH="${APPDIR}:${APPDIR}/usr/sbin...'
+    sed -i '/^export PATH="\${APPDIR}:\${APPDIR}\/usr\/sbin/a\
+\
+# ── Homebrew PATH (injected) ──\
+# Ajoute linuxbrew au PATH si présent (npm requis pour le rebuild desktop)\
+if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then\
+    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"\
+fi' "$APPRUN"
+    echo "  Brew PATH injecté dans l'AppRun."
+else
+    echo "  Brew PATH déjà injecté, on saute."
+fi
+
 if grep -q 'auto-update.*&' "$APPRUN" 2>/dev/null; then
     echo "  AppRun déjà patché (background), on saute."
 else
