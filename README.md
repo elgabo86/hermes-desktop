@@ -2,9 +2,7 @@
 
 Unofficial AppImage of [Hermes Desktop](https://github.com/NousResearch/hermes-agent) with custom modifications:
 
-- 🇫🇷 Full **French** locale (UI translation)
-- 🔤 Native context menus in French (Chromium)
-- 🧹 Uninstall section in French
+- 🇫🇷 Fully translated in French (UI, context menus, and uninstall)
 
 ## Why?
 
@@ -25,17 +23,14 @@ chmod +x Hermes.AppImage
 
 ## Updates
 
-L'AppImage intègre un **auto-updater** qui vérifie les mises à jour au lancement.
-Si une nouvelle version est disponible :
-- **Delta update** automatique (quelques Mo au lieu de 135 Mo) grâce à [AppImageUpdate](https://github.com/AppImage/AppImageUpdate)
-- Une boîte de dialogue propose la mise à jour (zenity/kdialog)
-- L'AppImage se met à jour toute seule et redémarre
+The AppImage includes an **auto-updater** that checks for updates on launch.
+When a new version is available:
+- **Delta update** (a few MB instead of 135 MB) via [AppImageUpdate](https://github.com/AppImage/AppImageUpdate)
+- A dialog prompts for the update (zenity/kdialog)
+- The AppImage updates itself and restarts
 
-L'outil de mise à jour (`appimageupdatetool`) est téléchargé automatiquement à la première
-mise à jour et mis en cache dans `~/.cache/hermes-updater/`.
-
-**Avec AppImageLauncher** (optionnel) : si vous avez [AppImageLauncher](https://github.com/TheAssassin/AppImageLauncher)
-installé, il gère les mises à jour automatiquement en arrière-plan — rien à configurer.
+The update tool (`appimageupdatetool`) is downloaded automatically on the first
+update and cached in `~/.cache/hermes-updater/`.
 
 ## Manual build
 
