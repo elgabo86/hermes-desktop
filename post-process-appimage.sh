@@ -63,10 +63,24 @@ cd "$WORK_DIR"
 ./original.AppImage --appimage-extract > /dev/null
 echo "Extraction OK."
 
-# ── Étape 2: Injecter le script auto-update ─────────────────────
+# ── Étape 2: Télécharger et injecter l'outil de mise à jour ─────
+
+echo ">>> Téléchargement de appimageupdatetool..."
+UPDATE_TOOL_URL="https://github.com/AppImage/AppImageUpdate/releases/download/continuous/appimageupdatetool-x86_64.AppImage"
+mkdir -p squashfs-root/usr/bin
+
+if command -v curl &>/dev/null; then
+    curl -sSL --connect-timeout 30 "$UPDATE_TOOL_URL" -o squashfs-root/usr/bin/appimageupdatetool
+elif command -v wget &>/dev/null; then
+    wget -q --timeout=30 "$UPDATE_TOOL_URL" -O squashfs-root/usr/bin/appimageupdatetool
+else
+    echo "ERREUR: ni curl ni wget disponible."
+    exit 1
+fi
+chmod +x squashfs-root/usr/bin/appimageupdatetool
+echo "  Outil embarqué."
 
 echo ">>> Injection du script auto-update..."
-mkdir -p squashfs-root/usr/bin
 cp "$SCRIPT_DIR/scripts/auto-update.sh" squashfs-root/usr/bin/auto-update
 chmod +x squashfs-root/usr/bin/auto-update
 
