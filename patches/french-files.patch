@@ -1,20 +1,16 @@
 diff --git a/apps/desktop/src/app/settings/uninstall-section.tsx b/apps/desktop/src/app/settings/uninstall-section.tsx
-index 5ac21ac80..e92838bd9 100644
+index 5ac21ac80..2acaa307c 100644
 --- a/apps/desktop/src/app/settings/uninstall-section.tsx
 +++ b/apps/desktop/src/app/settings/uninstall-section.tsx
-@@ -1,9 +1,10 @@
+@@ -1,6 +1,7 @@
  import { useEffect, useState } from 'react'
  
  import { Button } from '@/components/ui/button'
--import type { DesktopUninstallMode, DesktopUninstallSummary } from '@/global'
 +import { useI18n } from '@/i18n/context'
+ import type { DesktopUninstallMode, DesktopUninstallSummary } from '@/global'
  import { AlertTriangle, Loader2, Trash2 } from '@/lib/icons'
  import { cn } from '@/lib/utils'
-+import type { DesktopUninstallMode, DesktopUninstallSummary } from '@/global'
- 
- import { SectionHeading } from './primitives'
- 
-@@ -17,51 +18,45 @@ interface ModeOption {
+@@ -17,35 +18,9 @@ interface ModeOption {
    needsAgent: boolean
  }
  
@@ -48,12 +44,18 @@ index 5ac21ac80..e92838bd9 100644
 -
  export function UninstallSection() {
 +  const { t } = useI18n()
++
    const [summary, setSummary] = useState<DesktopUninstallSummary | null>(null)
    const [loading, setLoading] = useState(true)
    const [pending, setPending] = useState<DesktopUninstallMode | null>(null)
-   const [running, setRunning] = useState(false)
-   const [error, setError] = useState<string | null>(null)
+@@ -90,9 +65,33 @@ export function UninstallSection() {
+   }
  
+   // Gate the agent-removing options on whether an agent is actually present.
+-  // A future lite client that ships without the bundled agent shows GUI-only.
+   const agentInstalled = summary?.agent_installed ?? false
+-  const visibleOptions = OPTIONS.filter(opt => agentInstalled || !opt.needsAgent)
++
 +  const options: ModeOption[] = [
 +    {
 +      mode: 'gui',
@@ -78,59 +80,24 @@ index 5ac21ac80..e92838bd9 100644
 +    }
 +  ]
 +
-   useEffect(() => {
-     let alive = true
-     const bridge = window.hermesDesktop?.uninstall
--
-     if (!bridge) {
-       setLoading(false)
--
-       return
-     }
--
-     void bridge
-       .summary()
-       .then(result => {
-@@ -77,14 +72,12 @@ export function UninstallSection() {
-           setLoading(false)
-         }
-       })
--
-     return () => {
-       alive = false
-     }
-   }, [])
- 
-   const bridge = window.hermesDesktop?.uninstall
--
-   if (!bridge) {
-     return null
-   }
-@@ -92,21 +85,18 @@ export function UninstallSection() {
-   // Gate the agent-removing options on whether an agent is actually present.
-   // A future lite client that ships without the bundled agent shows GUI-only.
-   const agentInstalled = summary?.agent_installed ?? false
--  const visibleOptions = OPTIONS.filter(opt => agentInstalled || !opt.needsAgent)
 +  const visibleOptions = options.filter(opt => agentInstalled || !opt.needsAgent)
  
    const handleConfirm = async () => {
      if (!pending) {
-       return
-     }
--
-     setRunning(true)
-     setError(null)
--
-     try {
+@@ -106,11 +105,10 @@ export function UninstallSection() {
        const result = await bridge.run(pending)
--
+ 
        if (!result.ok) {
 -        setError(result.message || result.error || 'Uninstall could not start.')
 +        setError(result.message || result.error || "Échec du démarrage du désinstalleur")
          setRunning(false)
          setPending(null)
        }
-@@ -118,43 +108,50 @@ export function UninstallSection() {
+-      // On success the app quits shortly; keep the spinner up until it does.
+     } catch (err) {
+       setError(err instanceof Error ? err.message : String(err))
+       setRunning(false)
+@@ -118,44 +116,49 @@ export function UninstallSection() {
      }
    }
  
@@ -185,13 +152,14 @@ index 5ac21ac80..e92838bd9 100644
          ) : (
            <div className="flex flex-col gap-2">
 -            <p className="text-sm font-medium">Uninstall Hermes</p>
-+            <p className="text-sm font-medium">{t.uninstall.uninstallHermes}</p>
-             <p className="text-xs text-muted-foreground">
+-            <p className="text-xs text-muted-foreground">
 -              Choose how much to remove. The app closes to finish the job; reopen the installer any time to come back.
-+              {t.uninstall.uninstallDescription}
-             </p>
+-            </p>
++            <p className="text-sm font-medium">{t.uninstall.uninstallHermes}</p>
++            <p className="text-xs text-muted-foreground">{t.uninstall.uninstallDescription}</p>
              <div className="mt-1 flex flex-col gap-2">
                {visibleOptions.map(opt => (
+                 <button
 diff --git a/apps/desktop/src/components/chat/intro-copy.fr.jsonl b/apps/desktop/src/components/chat/intro-copy.fr.jsonl
 new file mode 100644
 index 000000000..52fc2ae54
@@ -274,14 +242,14 @@ index 000000000..52fc2ae54
 +{"personality":"none","headline":"Ton espace de travail, à un prompt près.","body":"Cherche dans le repo, édite des fichiers, lance des tests, ouvre des PRs. Dis-moi l'objectif et je gère les parties mécaniques."}
 +{"personality":"none","headline":"Prêt quand tu l'es.","body":"Tape une tâche, une question, ou un extrait. Je me souviens de la session, je cite mes sources, et je m'arrête pour demander quand je doute."}
 diff --git a/apps/desktop/src/components/chat/intro.tsx b/apps/desktop/src/components/chat/intro.tsx
-index 6dc365e64..dc8fada2d 100644
+index 6dc365e64..a716ecb0d 100644
 --- a/apps/desktop/src/components/chat/intro.tsx
 +++ b/apps/desktop/src/components/chat/intro.tsx
-@@ -1,8 +1,9 @@
+@@ -1,8 +1,10 @@
  import { type CSSProperties, useState } from 'react'
  
--import { capitalize, normalize } from '@/lib/text'
 +import { useI18n } from '@/i18n'
+ import { capitalize, normalize } from '@/lib/text'
  
 -import introCopyJsonl from './intro-copy.jsonl?raw'
 +import introCopyEn from './intro-copy.jsonl?raw'
@@ -289,24 +257,7 @@ index 6dc365e64..dc8fada2d 100644
  
  type IntroCopy = {
    headline: string
-@@ -44,14 +45,14 @@ const FALLBACK_COPY: IntroCopy[] = [
- ]
- 
- function normalizeKey(value?: string): string {
--  return normalize(value)
-+  return (value || '').trim().toLowerCase()
- }
- 
- function titleize(value: string): string {
-   return value
-     .split(/[-_\s]+/)
-     .filter(Boolean)
--    .map(capitalize)
-+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-     .join(' ')
- }
- 
-@@ -103,39 +104,46 @@ function parseIntroCopy(raw: string): Record<string, IntroCopy[]> {
+@@ -103,15 +105,25 @@ function parseIntroCopy(raw: string): Record<string, IntroCopy[]> {
    return byPersonality
  }
  
@@ -316,202 +267,111 @@ index 6dc365e64..dc8fada2d 100644
 +  fr: parseIntroCopy(introCopyFr)
 +}
 +
-+function copyForLocale(locale: string): Record<string, IntroCopy[]> {
-+  return INTRO_COPY_BY_LOCALE[locale] || INTRO_COPY_BY_LOCALE.en
++function copySetForLocale(locale: string): Record<string, IntroCopy[]> {
++  // Use the two-letter prefix to match 'fr', 'fr-FR', 'fr_CA', etc.
++  const prefix = locale.split(/[-_]/)[0] || ''
++  return INTRO_COPY_BY_LOCALE[prefix] || INTRO_COPY_BY_LOCALE.en
 +}
  
 -function neutralCopy(): IntroCopy[] {
 -  return INTRO_COPY_BY_PERSONALITY.none || INTRO_COPY_BY_PERSONALITY.default || FALLBACK_COPY
-+function neutralCopy(byPersonality: Record<string, IntroCopy[]>): IntroCopy[] {
++function neutralCopy(locale: string): IntroCopy[] {
++  const byPersonality = copySetForLocale(locale)
 +  return byPersonality.none || byPersonality.default || FALLBACK_COPY
  }
  
- function fallbackCopyForPersonality(personalityKey: string): IntroCopy[] {
+-function fallbackCopyForPersonality(personalityKey: string): IntroCopy[] {
++function fallbackCopyForPersonality(personalityKey: string, locale: string): IntroCopy[] {
    if (NEUTRAL_PERSONALITIES.has(personalityKey)) {
 -    return neutralCopy()
-+    return FALLBACK_COPY
++    return neutralCopy(locale)
    }
  
    const label = titleize(personalityKey)
- 
-   return [
-     {
--      headline: `${label} mode is on. What should we work on?`,
--      body: "Send the task, file, or rough idea. I'll use your configured voice and keep the work grounded in this repo."
-+      headline: `Mode ${label} activé. Sur quoi voulez-vous travailler ?`,
-+      body: "Envoyez la tâche, le fichier ou l'idée. J'utiliserai votre voix configurée et je resterai ancré dans ce dépôt."
-     },
-     {
--      headline: `What does ${label} Hermes need to see?`,
--      body: "Bring the context or the stuck part. I'll adapt to your configured personality."
-+      headline: `De quoi ${label} Hermes a-t-il besoin ?`,
-+      body: "Apportez le contexte ou le point bloquant. Je m'adapterai à votre personnalité configurée."
-     },
-     {
--      headline: `${label} mode is ready.`,
--      body: "Send the problem, file, or idea. I'll follow the personality you've configured."
-+      headline: `Mode ${label} est prêt.`,
-+      body: "Envoyez le problème, le fichier ou l'idée. Je suivrai la personnalité que vous avez configurée."
-     },
-     {
--      headline: `What should ${label} Hermes tackle?`,
--      body: "Drop the task here. I'll keep the work grounded in the repo."
-+      headline: `Que doit traiter ${label} Hermes ?`,
-+      body: "Déposez la tâche ici. Je resterai ancré dans le dépôt."
-     },
-     {
--      headline: 'Where should we begin?',
--      body: `Give me the context and I'll answer in ${label} mode.`
-+      headline: 'Par où commencer ?',
-+      body: `Donnez-moi le contexte et je répondrai en mode ${label}.`
-     }
-   ]
+@@ -144,21 +156,23 @@ function pickCopy(copies: IntroCopy[], seed = 0): IntroCopy {
+   return copies[Math.abs(seed) % copies.length] || FALLBACK_COPY[0]
  }
-@@ -146,19 +154,26 @@ function pickCopy(copies: IntroCopy[], seed = 0): IntroCopy {
  
- const WORDMARK = 'HERMES AGENT'
- 
+-const WORDMARK = 'HERMES AGENT'
+-
 -function resolveCopy(personality?: string, seed?: number): IntroCopy {
-+function resolveCopy(
-+  locale: string,
-+  byPersonality: Record<string, IntroCopy[]>,
-+  personality?: string,
-+  seed?: number
-+): IntroCopy {
++function resolveCopy(locale: string, personality?: string, seed?: number): IntroCopy {
    const personalityKey = normalizeKey(personality)
++  const byPersonality = copySetForLocale(locale)
  
    const copies = NEUTRAL_PERSONALITIES.has(personalityKey)
 -    ? INTRO_COPY_BY_PERSONALITY[personalityKey] || neutralCopy()
 -    : INTRO_COPY_BY_PERSONALITY[personalityKey] || fallbackCopyForPersonality(personalityKey)
-+    ? byPersonality[personalityKey] || neutralCopy(byPersonality)
-+    : byPersonality[personalityKey] || fallbackCopyForPersonality(personalityKey)
++    ? byPersonality[personalityKey] || neutralCopy(locale)
++    : byPersonality[personalityKey] || fallbackCopyForPersonality(personalityKey, locale)
  
    return pickCopy(copies, seed)
  }
  
++const WORDMARK = 'HERMES AGENT'
++
  export function Intro({ personality, seed }: IntroProps) {
 +  const { locale } = useI18n()
    const [mountSeed] = useState(() => Math.floor(Math.random() * 100000))
 -  const copy = resolveCopy(personality, mountSeed + (seed ?? 0))
-+  const byPersonality = copyForLocale(locale)
-+  const copy = resolveCopy(locale, byPersonality, personality, mountSeed + (seed ?? 0))
++  const copy = resolveCopy(locale, personality, mountSeed + (seed ?? 0))
  
    return (
      <div
 diff --git a/apps/desktop/src/components/gateway-connecting-overlay.tsx b/apps/desktop/src/components/gateway-connecting-overlay.tsx
-index 79bc99358..dc7e9fdfc 100644
+index 0268755d5..5b00d4012 100644
 --- a/apps/desktop/src/components/gateway-connecting-overlay.tsx
 +++ b/apps/desktop/src/components/gateway-connecting-overlay.tsx
-@@ -2,15 +2,12 @@ import { useStore } from '@nanostores/react'
+@@ -1,6 +1,7 @@
+ import { useStore } from '@nanostores/react'
  import { useEffect, useRef, useState } from 'react'
  
- import { DecodeText } from '@/components/ui/decode-text'
 +import { useI18n } from '@/i18n'
+ import { DecodeText } from '@/components/ui/decode-text'
  import { cn } from '@/lib/utils'
  import { $desktopBoot } from '@/store/boot'
- import { $gatewaySwitching } from '@/store/gateway-switch'
- import { $gatewayState } from '@/store/session'
+@@ -9,7 +10,7 @@ import { $gatewayState } from '@/store/session'
  
--// Decode mechanics live in the shared <DecodeText> primitive
--// (components/ui/decode-text.tsx). "CONN" stays legible via prefix={4}.
+ // Decode mechanics live in the shared <DecodeText> primitive
+ // (components/ui/decode-text.tsx). "CONN" stays legible via prefix={4}.
 -const TEXT = 'CONNECTING'
--
++const PREFIX_LEN = 4
+ 
  // Exit choreography (ms): text fades down + out, hold, then the overlay fades.
  const TEXT_OUT_MS = 360
- const POST_TEXT_HOLD_MS = 300
-@@ -36,6 +33,11 @@ function forcedPreview(): boolean {
+@@ -40,6 +41,8 @@ function prefersReducedMotion(): boolean {
  }
  
  export function GatewayConnectingOverlay() {
 +  const { t } = useI18n()
-+  const PREFIX = t.boot.steps.connectingPrefix
-+  const TAIL = t.boot.steps.connectingTail
-+  const TEXT = PREFIX + TAIL
-+
++  const TEXT = t.common.connecting.toUpperCase()
    const gatewayState = useStore($gatewayState)
    const boot = useStore($desktopBoot)
    const gatewaySwitching = useStore($gatewaySwitching)
-@@ -139,7 +141,7 @@ export function GatewayConnectingOverlay() {
-           leaving ? 'translate-y-2 opacity-0 saturate-0' : 'translate-y-0 opacity-100 saturate-100'
-         )}
-         cursor
--        prefix={4}
-+        prefix={PREFIX.length}
-         text={TEXT}
-       />
-     </div>
-diff --git a/apps/desktop/src/i18n/context.tsx b/apps/desktop/src/i18n/context.tsx
-index 103a63047..f316b4bdf 100644
---- a/apps/desktop/src/i18n/context.tsx
-+++ b/apps/desktop/src/i18n/context.tsx
-@@ -31,6 +31,30 @@ const defaultConfigClient: I18nConfigClient = {
-   }
- }
+diff --git a/apps/desktop/src/i18n/catalog.ts b/apps/desktop/src/i18n/catalog.ts
+index 19556cb45..09362b5ae 100644
+--- a/apps/desktop/src/i18n/catalog.ts
++++ b/apps/desktop/src/i18n/catalog.ts
+@@ -1,4 +1,5 @@
+ import { en } from './en'
++import { fr } from './fr'
+ import { ja } from './ja'
+ import type { Locale, Translations } from './types'
+ import { zh } from './zh'
+@@ -6,6 +7,7 @@ import { zhHant } from './zh-hant'
  
-+const I18N_LOCALE_KEY = 'hermes-i18n-locale'
-+
-+function readStoredLocale(): unknown {
-+  try {
-+    if (typeof window !== 'undefined' && window.localStorage) {
-+      return window.localStorage.getItem(I18N_LOCALE_KEY)
-+    }
-+  } catch {
-+    // localStorage may throw in sandboxed contexts.
-+  }
-+
-+  return undefined
-+}
-+
-+function storeLocale(locale: Locale): void {
-+  try {
-+    if (typeof window !== 'undefined' && window.localStorage) {
-+      window.localStorage.setItem(I18N_LOCALE_KEY, locale)
-+    }
-+  } catch {
-+    // Silently ignore — in-memory state is the source of truth.
-+  }
-+}
-+
- function isRecord(value: unknown): value is Record<string, unknown> {
-   return typeof value === 'object' && value !== null && !Array.isArray(value)
- }
-@@ -82,7 +106,9 @@ export interface I18nProviderProps {
- }
- 
- export function I18nProvider({ children, configClient = defaultConfigClient, initialLocale }: I18nProviderProps) {
--  const [locale, setLocaleState] = useState<Locale>(() => normalizeLocale(initialLocale))
-+  const [locale, setLocaleState] = useState<Locale>(() =>
-+    normalizeLocale(initialLocale ?? readStoredLocale())
-+  )
-   const [isLoadingConfig, setIsLoadingConfig] = useState(false)
-   const [isSavingLocale, setIsSavingLocale] = useState(false)
-   const [configLoadError, setConfigLoadError] = useState<Error | null>(null)
-@@ -108,7 +134,9 @@ export function I18nProvider({ children, configClient = defaultConfigClient, ini
-       .getConfig()
-       .then(config => {
-         if (!cancelled) {
--          setLocaleState(normalizeLocale(getConfigDisplayLanguage(config)))
-+          const resolvedLocale = normalizeLocale(getConfigDisplayLanguage(config))
-+          setLocaleState(resolvedLocale)
-+          storeLocale(resolvedLocale)
-         }
-       })
-       .catch(error => {
-@@ -148,6 +176,8 @@ export function I18nProvider({ children, configClient = defaultConfigClient, ini
-         if (!result.ok) {
-           throw new Error('Failed to save language')
-         }
-+
-+        storeLocale(next)
-       } catch (error) {
-         const nextError = toError(error)
- 
+ export const TRANSLATIONS: Record<Locale, Translations> = {
+   en,
++  fr,
+   zh,
+   'zh-hant': zhHant,
+   ja
 diff --git a/apps/desktop/src/i18n/fr.ts b/apps/desktop/src/i18n/fr.ts
 new file mode 100644
-index 000000000..552cb6b53
+index 000000000..2ed9a64c0
 --- /dev/null
 +++ b/apps/desktop/src/i18n/fr.ts
-@@ -0,0 +1,2906 @@
+@@ -0,0 +1,2910 @@
 +import { defineFieldCopy } from '@/app/settings/field-copy'
 +
 +import { defineLocale } from './define-locale'
@@ -830,6 +690,7 @@ index 000000000..552cb6b53
 +      providers: 'Fournisseurs',
 +      providerAccounts: 'Comptes',
 +      providerApiKeys: 'Clés API',
++      providerCustomEndpoints: 'Endpoints personnalisés',
 +      gateway: 'Passerelle',
 +      apiKeys: 'Outils & Clés',
 +      keysTools: 'Outils',
@@ -1305,7 +1166,10 @@ index 000000000..552cb6b53
 +      failedLoad: 'Échec du chargement des paramètres',
 +      autosaveFailed: 'Échec de l\'enregistrement automatique',
 +      imported: 'Configuration importée',
-+      invalidJson: 'JSON de configuration invalide'
++      invalidJson: 'JSON de configuration invalide',
++      keepAwakeTitle: 'Empêcher la mise en veille',
++      keepAwakeDesc:
++        'Empêcher cette machine de se mettre en veille pendant les longues exécutions. L\u2019écran peut encore s\u2019assombrir.'
 +    },
 +    credentials: {
 +      pasteKey: 'Coller la clé',
@@ -3418,3 +3282,159 @@ index 000000000..552cb6b53
 +    zoneCount: count => `${count} zones`
 +  }
 +})
+diff --git a/apps/desktop/src/i18n/languages.test.ts b/apps/desktop/src/i18n/languages.test.ts
+index 792aad5f5..a540215fb 100644
+--- a/apps/desktop/src/i18n/languages.test.ts
++++ b/apps/desktop/src/i18n/languages.test.ts
+@@ -15,27 +15,44 @@ describe('desktop i18n languages', () => {
+     expect(normalizeLocale('zh_HK')).toBe('zh-hant')
+     expect(normalizeLocale('ja')).toBe('ja')
+     expect(normalizeLocale('ja-JP')).toBe('ja')
++    expect(normalizeLocale('fr')).toBe('fr')
++    expect(normalizeLocale('français')).toBe('fr')
++    expect(normalizeLocale('fr-CA')).toBe('fr')
++    expect(normalizeLocale('fr-LU')).toBe('fr')
++    expect(normalizeLocale('fr_MA')).toBe('fr')
++    expect(normalizeLocale('fr-SN')).toBe('fr')
+   })
+ 
+   it('falls back to English for empty or unsupported values', () => {
+     expect(normalizeLocale(null)).toBe(DEFAULT_LOCALE)
+     expect(normalizeLocale('')).toBe(DEFAULT_LOCALE)
+     expect(normalizeLocale('de')).toBe(DEFAULT_LOCALE)
++    expect(normalizeLocale('fr-')).toBe(DEFAULT_LOCALE)
++    expect(normalizeLocale('fr_')).toBe(DEFAULT_LOCALE)
++    expect(normalizeLocale('fr-unknown')).toBe(DEFAULT_LOCALE)
+   })
+ 
+   it('distinguishes exact locale ids from supported config aliases', () => {
+     expect(isSupportedLocaleValue('zh-CN')).toBe(true)
+     expect(isSupportedLocaleValue('zh-TW')).toBe(true)
+     expect(isSupportedLocaleValue('ja-JP')).toBe(true)
++    expect(isSupportedLocaleValue('fr-FR')).toBe(true)
++    expect(isSupportedLocaleValue('fr-SN')).toBe(true)
++    expect(isSupportedLocaleValue('fr-LU')).toBe(true)
+     expect(isSupportedLocaleValue('de')).toBe(false)
++    expect(isSupportedLocaleValue('fr-')).toBe(false)
++    expect(isSupportedLocaleValue('fr_')).toBe(false)
++    expect(isSupportedLocaleValue('fr-unknown')).toBe(false)
+     expect(isLocale('zh-CN')).toBe(false)
+     expect(isLocale('zh')).toBe(true)
+     expect(isLocale('zh-hant')).toBe(true)
+     expect(isLocale('ja')).toBe(true)
++    expect(isLocale('fr')).toBe(true)
+   })
+ 
+   it('returns the persisted config value for supported locales', () => {
+     expect(localeConfigValue('en')).toBe('en')
++    expect(localeConfigValue('fr')).toBe('fr')
+     expect(localeConfigValue('zh')).toBe('zh')
+     expect(localeConfigValue('zh-hant')).toBe('zh-hant')
+     expect(localeConfigValue('ja')).toBe('ja')
+diff --git a/apps/desktop/src/i18n/languages.ts b/apps/desktop/src/i18n/languages.ts
+index 96daf9b59..9a0348248 100644
+--- a/apps/desktop/src/i18n/languages.ts
++++ b/apps/desktop/src/i18n/languages.ts
+@@ -11,6 +11,12 @@ export const LOCALE_OPTIONS = [
+     englishName: 'English',
+     configValue: 'en'
+   },
++  {
++    id: 'fr',
++    name: 'Français',
++    englishName: 'French',
++    configValue: 'fr'
++  },
+   {
+     id: 'zh',
+     name: '简体中文',
+@@ -43,6 +49,18 @@ const LOCALE_ALIASES: Record<string, Locale> = {
+   en: 'en',
+   'en-us': 'en',
+   en_us: 'en',
++  fr: 'fr',
++  french: 'fr',
++  francais: 'fr',
++  'fr-fr': 'fr',
++  fr_fr: 'fr',
++  'fr-ca': 'fr',
++  fr_ca: 'fr',
++  'fr-be': 'fr',
++  fr_be: 'fr',
++  'fr-ch': 'fr',
++  fr_ch: 'fr',
++  français: 'fr',
+   zh: 'zh',
+   'zh-cn': 'zh',
+   zh_cn: 'zh',
+@@ -67,6 +85,8 @@ const LOCALE_ALIASES: Record<string, Locale> = {
+   ja_jp: 'ja'
+ }
+ 
++const FRENCH_REGION_LOCALE_RE = /^fr[-_][a-z]{2}$/
++
+ export function isLocale(value: unknown): value is Locale {
+   return typeof value === 'string' && LOCALE_OPTIONS.some(locale => locale.id === value)
+ }
+@@ -76,11 +96,23 @@ export function normalizeLocale(value: unknown): Locale {
+     return DEFAULT_LOCALE
+   }
+ 
+-  return LOCALE_ALIASES[normalize(value)] ?? DEFAULT_LOCALE
++  const normalized = normalize(value)
++
++  if (FRENCH_REGION_LOCALE_RE.test(normalized)) {
++    return 'fr'
++  }
++
++  return LOCALE_ALIASES[normalized] ?? DEFAULT_LOCALE
+ }
+ 
+ export function isSupportedLocaleValue(value: unknown): boolean {
+-  return typeof value === 'string' && LOCALE_ALIASES[normalize(value)] != null
++  if (typeof value !== 'string') {
++    return false
++  }
++
++  const normalized = normalize(value)
++
++  return FRENCH_REGION_LOCALE_RE.test(normalized) || LOCALE_ALIASES[normalized] != null
+ }
+ 
+ export function localeConfigValue(locale: Locale): string {
+diff --git a/apps/desktop/src/i18n/types.ts b/apps/desktop/src/i18n/types.ts
+index 25a9f67e2..5ef014a4b 100644
+--- a/apps/desktop/src/i18n/types.ts
++++ b/apps/desktop/src/i18n/types.ts
+@@ -5,7 +5,7 @@
+ // partial locales should use `defineLocale()` so missing desktop-only strings
+ // fall back to English while new keys remain type-checked.
+ 
+-export type Locale = 'en' | 'zh' | 'zh-hant' | 'ja'
++export type Locale = 'en' | 'fr' | 'zh' | 'zh-hant' | 'ja'
+ 
+ export type ToolTitleKey =
+   | 'browser_click'
+@@ -2247,4 +2247,22 @@ export interface Translations {
+       toggle: string
+     }
+   }
++
++  uninstall: {
++    dangerZone: string
++    checking: string
++    confirmTitle: string
++    confirmBody: (consequence: string) => string
++    uninstalling: string
++    yesUninstall: string
++    couldNotStart: string
++    cancel: string
++    uninstallHermes: string
++    uninstallDescription: string
++    options: {
++      gui: { title: string; description: string; consequence: string }
++      lite: { title: string; description: string; consequence: string }
++      full: { title: string; description: string; consequence: string }
++    }
++  }
+ }
