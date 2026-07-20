@@ -34,8 +34,9 @@ if [ -f "$SCRIPT_DIR/patches/upstream-files.patch" ]; then
 fi
 if [ -f "$SCRIPT_DIR/patches/french-files.patch" ]; then
   git apply "$SCRIPT_DIR/patches/french-files.patch" || {
-    echo "WARNING: french-files.patch failed, trying --reject..."
-    git apply --reject "$SCRIPT_DIR/patches/french-files.patch" || true
+    echo "ERROR: french-files.patch failed to apply. Upstream may have diverged."
+    echo "Update the patch (french-files.patch) and retry."
+    exit 1
   }
 fi
 
