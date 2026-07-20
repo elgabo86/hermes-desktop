@@ -23,19 +23,24 @@ echo ">>> Cloning upstream..."
 git clone --depth=1 --branch="$UPSTREAM_REF" \
   https://github.com/NousResearch/hermes-agent.git "$WORK_DIR"
 
-# Appliquer les patches
+# Appliquer les patches (ordre important : french d'abord, puis upstream)
 echo ">>> Applying patches..."
 cd "$WORK_DIR"
-if [ -f "$SCRIPT_DIR/patches/upstream-files.patch" ]; then
-  git apply "$SCRIPT_DIR/patches/upstream-files.patch" || {
-    echo "WARNING: upstream-files.patch failed, trying --reject..."
-    git apply --reject "$SCRIPT_DIR/patches/upstream-files.patch" || true
-  }
-fi
+
+# 1. Patch français (fichiers core i18n + composants)
 if [ -f "$SCRIPT_DIR/patches/french-files.patch" ]; then
   git apply "$SCRIPT_DIR/patches/french-files.patch" || {
     echo "ERROR: french-files.patch failed to apply. Upstream may have diverged."
     echo "Update the patch (french-files.patch) and retry."
+    exit 1
+  }
+fi
+
+# 2. Patch upstream (en.ts, zh.ts — clés manquantes dans l'upstream)
+if [ -f "$SCRIPT_DIR/patches/upstream-files.patch" ]; then
+  git apply --3way "$SCRIPT_DIR/patches/upstream-files.patch" || {
+    echo "ERROR: upstream-files.patch failed to apply."
+    echo "Update the patch and retry."
     exit 1
   }
 fi
