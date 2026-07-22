@@ -4,7 +4,6 @@ AppImage non-officielle de [Hermes Desktop](https://github.com/NousResearch/herm
 
 - 🇫🇷 Interface entièrement en français
 - 🔄 Auto-update automatique au lancement
-- 📦 Une seule release `latest`, toujours à jour
 
 ## Pourquoi ?
 
