@@ -8,7 +8,7 @@ if [ -z "${APPIMAGE:-}" ] || [ "$APPIMAGE" = "$APPDIR/AppRun" ]; then
     exit 0
 fi
 
-VERSION_URL="https://raw.githubusercontent.com/elgabo86/hermes-desktop/main/VERSION"
+VERSION_URL="https://github.com/elgabo86/hermes-desktop/releases/latest/download/VERSION"
 RELEASE_URL="https://github.com/elgabo86/hermes-desktop/releases/latest/download"
 CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/hermes-desktop-version"
 

@@ -41,12 +41,7 @@ jobs:
 
       - name: Update VERSION file
         run: |
-          date -u +%Y%m%dT%H%M%SZ > VERSION
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add VERSION
-          git commit -m "build: bump VERSION" || true
-          git push
+          date -u +%Y%m%dT%H%M%SZ > dist/VERSION
 
       - name: Delete existing latest release (if any)
         run: |
@@ -62,4 +57,5 @@ jobs:
           files: |
             dist/hermes-desktop-*.AppImage
             dist/hermes-desktop-*.AppImage.zsync
+            dist/VERSION
           fail_on_unmatched_files: true
