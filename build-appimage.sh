@@ -1,57 +1,31 @@
 #!/usr/bin/bash
 set -eoux pipefail
 
-# build-appimage.sh — Build Hermes Desktop AppImage avec patches français
-# Usage: ./build-appimage.sh [UPSTREAM_TAG|UPSTREAM_COMMIT]
-# Par défaut: upstream/main
+# build-appimage.sh — Build Hermes Desktop AppImage depuis le fork i18n FR
+# Usage: ./build-appimage.sh [I18N_BRANCH]
+# Par défaut: i18n/french-desktop
 
-UPSTREAM_REF="${1:-main}"
+I18N_BRANCH="${1:-i18n/french-desktop}"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 WORK_DIR="/tmp/hermes-desktop-build-$$"
 OUTPUT_DIR="$SCRIPT_DIR/dist"
 
-echo "=== Hermes Desktop AppImage Build ==="
-echo "Upstream ref: $UPSTREAM_REF"
+echo "=== Hermes Desktop AppImage Build (i18n FR) ==="
+echo "Fork branch:  $I18N_BRANCH"
 echo "Work dir:     $WORK_DIR"
 
 # Nettoyage
 rm -rf "$WORK_DIR"
 mkdir -p "$WORK_DIR" "$OUTPUT_DIR"
 
-# Clone upstream
-echo ">>> Cloning upstream..."
-git clone --depth=1 --branch="$UPSTREAM_REF" \
-  https://github.com/NousResearch/hermes-agent.git "$WORK_DIR"
-
-# Appliquer les patches (ordre important : french d'abord, puis upstream)
-echo ">>> Applying patches..."
-cd "$WORK_DIR"
-
-# 0. Copier les nouveaux fichiers (non couverts par git diff)
-echo ">>> Copying new files..."
-cp "$SCRIPT_DIR/patches/fr.ts" apps/desktop/src/i18n/
-cp "$SCRIPT_DIR/patches/intro-copy.fr.jsonl" apps/desktop/src/components/chat/
-
-# 1. Patch français (fichiers core i18n + composants)
-if [ -f "$SCRIPT_DIR/patches/french-files.patch" ]; then
-  git apply "$SCRIPT_DIR/patches/french-files.patch" || {
-    echo "ERROR: french-files.patch failed to apply. Upstream may have diverged."
-    echo "Update the patch (french-files.patch) and retry."
-    exit 1
-  }
-fi
-
-# 2. Patch upstream (en.ts, zh.ts — clés manquantes dans l'upstream)
-if [ -f "$SCRIPT_DIR/patches/upstream-files.patch" ]; then
-  git apply "$SCRIPT_DIR/patches/upstream-files.patch" || {
-    echo "ERROR: upstream-files.patch failed to apply."
-    echo "Update the patch and retry."
-    exit 1
-  }
-fi
+# Cloner le fork i18n (contient déjà fr.ts + tous les patches)
+echo ">>> Cloning i18n fork..."
+git clone --depth=1 --branch="$I18N_BRANCH" \
+  https://github.com/elgabo86/hermes-agent.git "$WORK_DIR"
 
 # Installer dépendances (depuis la racine, --ignore-scripts pour Kinoite)
 echo ">>> Installing dependencies..."
+cd "$WORK_DIR"
 npm install --ignore-scripts
 
 # Builder l'AppImage
@@ -78,7 +52,6 @@ echo ">>> Renommé: $OUTPUT_DIR/$NEWNAME"
 APPIMAGE_NAME="$NEWNAME"
 
 # ── Post-processing: injecter l'auto-update ─────────────────────
-
 POST_PROCESS="$SCRIPT_DIR/post-process-appimage.sh"
 if [ -x "$POST_PROCESS" ]; then
     echo ">>> Post-processing (auto-updater)..."

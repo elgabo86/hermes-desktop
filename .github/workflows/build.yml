@@ -5,9 +5,9 @@ on:
     - cron: '0 6 * * *'  # tous les jours à 06:00 UTC
   workflow_dispatch:
     inputs:
-      upstream_ref:
-        description: 'Upstream ref (branch, tag, commit)'
-        default: 'main'
+      i18n_branch:
+        description: 'i18n fork branch'
+        default: 'i18n/french-desktop'
         required: false
 
 permissions:
@@ -26,7 +26,7 @@ jobs:
       - name: Build AppImage
         run: |
           chmod +x build-appimage.sh
-          ./build-appimage.sh "${{ inputs.upstream_ref || 'main' }}"
+          ./build-appimage.sh "${{ inputs.i18n_branch || 'i18n/french-desktop' }}"
 
       - name: Install build dependencies (zsync + squashfs-tools)
         run: |
