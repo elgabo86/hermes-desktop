@@ -9,34 +9,29 @@ if [ -z "${APPIMAGE:-}" ] || [ "$APPIMAGE" = "$APPDIR/AppRun" ]; then
 fi
 
 REPO="elgabo86/hermes-desktop"
-RELEASE_URL="https://github.com/${REPO}/releases/download/latest"
+CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/hermes-desktop-update"
 
-# Récupérer la date de la dernière release via l'API GitHub (rapide, pas de téléchargement)
+# Récupérer la date de la dernière release via l'API GitHub
 REMOTE_DATE=$(curl -fsS --connect-timeout 10 -H "Accept: application/vnd.github+json" \
   "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
   grep -o '"published_at": "[^"]*"' | cut -d'"' -f4)
 
 if [ -z "$REMOTE_DATE" ]; then
-    exit 0  # Pas de réseau, on abandonne silencieusement
+    exit 0  # Pas de réseau
 fi
 
-REMOTE_TS=$(date -d "$REMOTE_DATE" +%s 2>/dev/null || date -jf "%Y-%m-%dT%H:%M:%SZ" "$REMOTE_DATE" +%s 2>/dev/null)
-LOCAL_TS=$(stat -c %Y "$APPIMAGE" 2>/dev/null)
-
-if [ -z "$REMOTE_TS" ] || [ -z "$LOCAL_TS" ]; then
-    exit 0
+# Comparer avec la date stockée dans le cache
+if [ -f "$CACHE_FILE" ]; then
+    CACHED_DATE=$(cat "$CACHE_FILE")
+    if [ "$REMOTE_DATE" = "$CACHED_DATE" ]; then
+        exit 0  # Déjà à jour
+    fi
 fi
 
-# Si le fichier local est déjà plus récent ou identique, rien à faire
-if [ "$LOCAL_TS" -ge "$REMOTE_TS" ]; then
-    exit 0
-fi
-
-# Télécharger la nouvelle AppImage
+# Nouvelle version disponible : télécharger
 echo "[auto-update] Nouvelle version disponible, téléchargement..."
 TEMP=$(mktemp "/tmp/hermes-desktop-XXXXXX.AppImage")
 
-# Lister les assets pour trouver le nom exact du fichier
 DL_URL=$(curl -fsS "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
   grep -o '"browser_download_url": "[^"]*x86_64\.AppImage"' | head -1 | cut -d'"' -f4)
 
@@ -48,6 +43,8 @@ fi
 if curl -fSL --connect-timeout 30 --max-time 600 -o "$TEMP" "$DL_URL" 2>/dev/null; then
     chmod +x "$TEMP"
     mv "$TEMP" "$APPIMAGE"
+    mkdir -p "$(dirname "$CACHE_FILE")"
+    echo "$REMOTE_DATE" > "$CACHE_FILE"
     echo "[auto-update] Mise à jour terminée. Redémarrez Hermes Desktop."
 else
     rm -f "$TEMP"
