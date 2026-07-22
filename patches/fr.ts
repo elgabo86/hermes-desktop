@@ -2568,5 +2568,51 @@ export const fr: Translations = {
           'TOUT — l\'interface de chat, l\'agent Hermes, et toute votre configuration, conversations, secrets et logs'
       }
     }
+  },
+
+  zones: {
+    showHeader: 'Afficher l\'en-tête',
+    hideHeader: 'Masquer l\'en-tête',
+    minimize: 'Réduire',
+    restore: 'Restaurer',
+    closeRunningTitle: 'Fermer l\'onglet actif ?',
+    closeRunningBody:
+      'Cette conversation est encore en cours (ou attend votre saisie). Fermer l\'onglet le masque — la session conserve sa progression et peut être rouverte depuis la barre latérale.',
+    closeRunningConfirm: 'Fermer l\'onglet',
+    closeOthers: 'Fermer les autres',
+    closeToRight: 'Fermer à droite',
+    closeAll: 'Tout fermer',
+    split: dir => `Fractionner ${dir}`,
+    move: dir => `Déplacer ${dir}`,
+    dirUp: 'haut',
+    dirDown: 'bas',
+    dirLeft: 'gauche',
+    dirRight: 'droite',
+    pluginDisabled: pluginId => `Plugin « ${pluginId} » désactivé`,
+    pluginDisabledBody: 'Réactivez-le dans Paramètres → Plugins pour restaurer le panneau.',
+    missingPane: paneId => `panneau manquant : ${paneId}`,
+    editTitle: 'Dispositions',
+    editHint: 'Choisissez une disposition, ou faites glisser les panneaux entre les zones. Clic droit sur une zone pour fractionner.',
+    reset: 'Réinitialiser',
+    templates: 'Modèles',
+    custom: 'Personnalisé',
+    newGridLayout: 'Nouvelle grille',
+    saveCurrentAs: 'Enregistrer l\'arrangement actuel comme modèle',
+    nameLayoutPlaceholder: 'Nommer cette disposition…',
+    deletePreset: name => `Supprimer ${name}`,
+    zoneEditorTitle: 'Éditeur de zones',
+    editorHintPre: 'clic pour fractionner · ',
+    editorHintPost: ' inverse la ligne · glisser entre zones pour fusionner · glisser les bords pour redimensionner',
+    templateColumns: 'Colonnes',
+    templateRows: 'Lignes',
+    templateGrid: 'Grille',
+    templatePriority: 'Priorité',
+    zoneTag: index => `zone ${index}`,
+    mergeZones: count => `Fusionner ${count} zones`,
+    customZoneName: count => `Personnalisé ${count} zones`,
+    layoutNamePlaceholder: fallback => `Nom de la disposition (${fallback})`,
+    saveApply: 'Enregistrer & appliquer',
+    notExpressible: 'cet arrangement est imbriqué (moulinet) — impossible à exprimer en fractions imbriquées pour l\'instant',
+    zoneCount: count => `${count} zones`
   }
 }
