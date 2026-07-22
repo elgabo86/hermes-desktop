@@ -1,5 +1,5 @@
 diff --git a/apps/desktop/src/i18n/en.ts b/apps/desktop/src/i18n/en.ts
-index 7765c0f74..c531c4f71 100644
+index 532a52a..6e88992 100644
 --- a/apps/desktop/src/i18n/en.ts
 +++ b/apps/desktop/src/i18n/en.ts
 @@ -69,7 +69,9 @@ export const en: Translations = {
@@ -8,44 +8,37 @@ index 7765c0f74..c531c4f71 100644
        startingDesktopConnection: 'Starting desktop connection',
 -      startingHermesDesktop: 'Starting Hermes Desktop…'
 +      startingHermesDesktop: 'Starting Hermes Desktop…',
-+      connectingPrefix: 'Connecting',
-+      connectingTail: '…',
++      connectingPrefix: 'CONN',
++      connectingTail: 'ECTING',
      },
      errors: {
        backgroundExited: 'Hermes background process exited.',
-@@ -727,6 +729,7 @@ export const en: Translations = {
-       defaultsFailed: 'Failed to save model defaults',
-       auxiliaryTitle: 'Auxiliary models',
-       resetAllToMain: 'Reset all to main',
-+      staleAuxWarning: (count, names, provider) => `${count} auxiliary task${count === 1 ? '' : 's'} (${names}) still run on ${provider}, not your main model.`,
-       auxiliaryDesc: 'Helper tasks run on the main model by default. Assign a dedicated model to any task to override.',
-       setToMain: 'Set to main',
-       change: 'Change',
-@@ -2661,5 +2664,22 @@ export const en: Translations = {
+@@ -2710,5 +2712,23 @@ export const en: Translations = {
        description: 'Displays the mobile sidebar.',
        toggle: 'Toggle Sidebar'
      }
 +  },
 +
 +  uninstall: {
-+    dangerZone: 'Danger Zone',
-+    checking: 'Checking…',
-+    confirmTitle: 'Uninstall Hermes',
-+    confirmBody: (consequence: string) => `This will ${consequence}. Are you sure?`,
++    dangerZone: 'Danger zone',
++    checking: 'Checking installation…',
++    confirmTitle: 'Uninstall Hermes?',
++    confirmBody: consequence => `This will uninstall Hermes Desktop and ${consequence}. This cannot be undone.`,
 +    uninstalling: 'Uninstalling…',
-+    yesUninstall: 'Yes, Uninstall',
++    yesUninstall: 'Yes, uninstall',
++    couldNotStart: 'Could not start uninstaller. Try running Hermes from a terminal.',
 +    cancel: 'Cancel',
 +    uninstallHermes: 'Uninstall Hermes',
-+    uninstallDescription: 'This will remove Hermes from your system. Choose an option below.',
++    uninstallDescription: 'Remove Hermes Desktop and all its data from this computer.',
 +    options: {
-+      gui: { title: 'GUI Only', description: 'Remove the desktop app but keep your data and agent.', consequence: 'remove the Hermes desktop application' },
-+      lite: { title: 'Lite', description: 'Remove the app and your Hermes configuration.', consequence: 'remove Hermes Desktop and your configuration' },
-+      full: { title: 'Full', description: 'Remove everything including all Hermes data.', consequence: 'remove Hermes Desktop, configuration, and all data' }
-+    }
++      gui: { title: 'GUI only', description: 'Remove the app but keep config and data.', consequence: 'remove only the application files' },
++      lite: { title: 'Lite', description: 'Remove the app and config, but keep chat history and skills.', consequence: 'remove the application and configuration files' },
++      full: { title: 'Full', description: 'Remove everything — app, config, data, and chat history.', consequence: 'permanently delete all application files, configuration, and chat history' },
++    },
    }
  }
 diff --git a/apps/desktop/src/i18n/zh.ts b/apps/desktop/src/i18n/zh.ts
-index 07c01b739..28a872e52 100644
+index 62cf345..80299bc 100644
 --- a/apps/desktop/src/i18n/zh.ts
 +++ b/apps/desktop/src/i18n/zh.ts
 @@ -69,7 +69,9 @@ export const zh: Translations = {
@@ -54,20 +47,12 @@ index 07c01b739..28a872e52 100644
        startingDesktopConnection: '正在启动桌面连接',
 -      startingHermesDesktop: '正在启动 Hermes 桌面版…'
 +      startingHermesDesktop: '正在启动 Hermes 桌面版…',
-+      connectingPrefix: 'Connecting',
-+      connectingTail: '…',
++      connectingPrefix: 'CONN',
++      connectingTail: 'ECTING',
      },
      errors: {
        backgroundExited: 'Hermes 后台进程已退出。',
-@@ -921,6 +923,7 @@ export const zh: Translations = {
-       defaultsFailed: '保存模型默认值失败',
-       auxiliaryTitle: '辅助模型',
-       resetAllToMain: '全部重置为主模型',
-+      staleAuxWarning: (count, names, provider) => `${count} 个辅助任务 (${names}) 仍在 ${provider} 上运行，而非您的主模型。`,
-       auxiliaryDesc: '辅助任务默认使用主模型。你可以为任意任务指定专用模型。',
-       setToMain: '设为主模型',
-       change: '更改',
-@@ -2811,5 +2814,22 @@ export const zh: Translations = {
+@@ -2868,5 +2870,23 @@ export const zh: Translations = {
        description: '显示移动端侧边栏。',
        toggle: '切换侧边栏'
      }
@@ -75,18 +60,19 @@ index 07c01b739..28a872e52 100644
 +
 +  uninstall: {
 +    dangerZone: '危险区域',
-+    checking: '正在检查…',
-+    confirmTitle: '卸载 Hermes',
-+    confirmBody: (consequence: string) => `这将${consequence}。你确定吗？`,
++    checking: '正在检查安装…',
++    confirmTitle: '卸载 Hermes？',
++    confirmBody: consequence => `这将卸载 Hermes Desktop 并${consequence}。此操作不可撤销。`,
 +    uninstalling: '正在卸载…',
-+    yesUninstall: '是的，卸载',
++    yesUninstall: '确认卸载',
++    couldNotStart: '无法启动卸载程序。请尝试从终端运行 Hermes。',
 +    cancel: '取消',
 +    uninstallHermes: '卸载 Hermes',
-+    uninstallDescription: '这将从你的系统中移除 Hermes。请选择以下选项。',
++    uninstallDescription: '从此计算机移除 Hermes Desktop 及其所有数据。',
 +    options: {
-+      gui: { title: '仅 GUI', description: '移除桌面应用但保留数据和代理。', consequence: '移除 Hermes 桌面应用' },
-+      lite: { title: '精简', description: '移除应用和 Hermes 配置。', consequence: '移除 Hermes 桌面和配置' },
-+      full: { title: '完全', description: '移除所有内容，包括所有 Hermes 数据。', consequence: '移除 Hermes 桌面、配置和所有数据' }
-+    }
++      gui: { title: '仅 GUI', description: '移除应用但保留配置和数据。', consequence: '仅移除应用程序文件' },
++      lite: { title: '精简', description: '移除应用和配置，但保留聊天记录和技能。', consequence: '移除应用程序和配置文件' },
++      full: { title: '完全', description: '移除所有内容 — 应用、配置、数据和聊天记录。', consequence: '永久删除所有应用程序文件、配置和聊天记录' },
++    },
    }
  }

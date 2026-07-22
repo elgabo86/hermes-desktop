@@ -27,6 +27,11 @@ git clone --depth=1 --branch="$UPSTREAM_REF" \
 echo ">>> Applying patches..."
 cd "$WORK_DIR"
 
+# 0. Copier les nouveaux fichiers (non couverts par git diff)
+echo ">>> Copying new files..."
+cp "$SCRIPT_DIR/patches/fr.ts" apps/desktop/src/i18n/
+cp "$SCRIPT_DIR/patches/intro-copy.fr.jsonl" apps/desktop/src/components/chat/
+
 # 1. Patch français (fichiers core i18n + composants)
 if [ -f "$SCRIPT_DIR/patches/french-files.patch" ]; then
   git apply "$SCRIPT_DIR/patches/french-files.patch" || {
