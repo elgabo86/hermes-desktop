@@ -91,7 +91,8 @@ git push
 
 ## Pièges
 
-- `fr.ts` utilise l'interface `Translations` directement → toute clé manquante = erreur build
+- `npm run build` utilise Vite (pas de type-check) → **toujours vérifier avec `npx tsc --noEmit` avant de publier**
+- `fr.ts` implémente `Translations` directement → toute clé manquante = crash runtime, pas juste de l'anglais
 - `defineLocale()` n'est PAS utilisé (contrairement à ce que suggère le commit dbd97c5b0)
 - Les nouveaux fichiers (fr.ts, intro-copy.fr.jsonl) ne sont PAS dans les patches git diff → copiés séparément
 - `build-appimage.sh` doit être mis à jour si on ajoute de nouveaux fichiers

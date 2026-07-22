@@ -284,7 +284,7 @@ index 6dc365e..3b47f70 100644
    return (
      <div
 diff --git a/apps/desktop/src/components/gateway-connecting-overlay.tsx b/apps/desktop/src/components/gateway-connecting-overlay.tsx
-index 0268755..3c58c6e 100644
+index 0268755..6bdd0b6 100644
 --- a/apps/desktop/src/components/gateway-connecting-overlay.tsx
 +++ b/apps/desktop/src/components/gateway-connecting-overlay.tsx
 @@ -1,15 +1,15 @@
@@ -322,8 +322,8 @@ index 0268755..3c58c6e 100644
  
  export function GatewayConnectingOverlay() {
 +  const { t } = useI18n()
-+  const PREFIX = t.boot.connectingPrefix
-+  const TAIL = t.boot.connectingTail
++  const PREFIX = t.boot.steps.connectingPrefix
++  const TAIL = t.boot.steps.connectingTail
 +
    const gatewayState = useStore($gatewayState)
    const boot = useStore($desktopBoot)
