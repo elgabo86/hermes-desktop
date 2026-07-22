@@ -50,9 +50,6 @@ jobs:
         with:
           tag_name: latest
           name: Hermes Desktop
-          body: |
-            Build horodaté de Hermes Desktop avec traduction française.
-            Le nom du fichier inclut la version et le timestamp.
           files: |
             dist/hermes-desktop-*.AppImage
             dist/hermes-desktop-*.AppImage.zsync
