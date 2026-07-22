@@ -434,6 +434,7 @@ export const fr: Translations = {
       installed: name => `« ${name} » installé.`,
       removeTheme: 'Supprimer le thème',
       importedBadge: 'Importé',
+      themeSearchPlaceholder: 'Rechercher parmi vos thèmes ou sur le Marketplace VS Code…',
       pet: {
         title: 'Mascotte',
         intro:

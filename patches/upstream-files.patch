@@ -1,5 +1,5 @@
 diff --git a/apps/desktop/src/i18n/en.ts b/apps/desktop/src/i18n/en.ts
-index 532a52a..6e88992 100644
+index 532a52a..e2f86e9 100644
 --- a/apps/desktop/src/i18n/en.ts
 +++ b/apps/desktop/src/i18n/en.ts
 @@ -69,7 +69,9 @@ export const en: Translations = {
@@ -13,7 +13,15 @@ index 532a52a..6e88992 100644
      },
      errors: {
        backgroundExited: 'Hermes background process exited.',
-@@ -2710,5 +2712,23 @@ export const en: Translations = {
+@@ -441,6 +443,7 @@ export const en: Translations = {
+       installed: name => `Installed “${name}”.`,
+       removeTheme: 'Remove theme',
+       importedBadge: 'Imported',
++      themeSearchPlaceholder: 'Search your themes or the VS Code Marketplace…',
+       pet: {
+         title: 'Pet',
+         intro:
+@@ -2710,5 +2713,23 @@ export const en: Translations = {
        description: 'Displays the mobile sidebar.',
        toggle: 'Toggle Sidebar'
      }
@@ -38,7 +46,7 @@ index 532a52a..6e88992 100644
    }
  }
 diff --git a/apps/desktop/src/i18n/zh.ts b/apps/desktop/src/i18n/zh.ts
-index 62cf345..80299bc 100644
+index 62cf345..8ad02c7 100644
 --- a/apps/desktop/src/i18n/zh.ts
 +++ b/apps/desktop/src/i18n/zh.ts
 @@ -69,7 +69,9 @@ export const zh: Translations = {
@@ -52,7 +60,15 @@ index 62cf345..80299bc 100644
      },
      errors: {
        backgroundExited: 'Hermes 后台进程已退出。',
-@@ -2868,5 +2870,23 @@ export const zh: Translations = {
+@@ -429,6 +431,7 @@ export const zh: Translations = {
+       installed: name => `已安装「${name}」。`,
+       removeTheme: '移除主题',
+       importedBadge: '已导入',
++      themeSearchPlaceholder: '搜索您的主题或 VS Code 市场…',
+       pet: {
+         title: '宠物',
+         intro:
+@@ -2868,5 +2871,23 @@ export const zh: Translations = {
        description: '显示移动端侧边栏。',
        toggle: '切换侧边栏'
      }
