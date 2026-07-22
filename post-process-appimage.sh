@@ -56,12 +56,17 @@ APPRUN="squashfs-root/AppRun"
 
 # Injecter le PATH brew si nécessaire
 if ! grep -q 'linuxbrew.*PATH' "$APPRUN" 2>/dev/null; then
-    sed -i '/^export PATH="\${APPDIR}:\${APPDIR}\/usr\/sbin/a\
-
-# ── Homebrew PATH (injected) ──
-if [ -d "/home/linuxbrew/.linuxbrew/bin" ]; then
-    export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-fi' "$APPRUN"
+    awk -i inplace '
+/^export PATH="\$\{APPDIR\}:\$\{APPDIR\}\/usr\/sbin/ {
+    print
+    print ""
+    print "# ── Homebrew PATH (injected) ──"
+    print "if [ -d \"/home/linuxbrew/.linuxbrew/bin\" ]; then"
+    print "    export PATH=\"/home/linuxbrew/.linuxbrew/bin:$PATH\""
+    print "fi"
+    next
+}
+{ print }' "$APPRUN"
     echo "  Brew PATH injecté."
 fi
 
