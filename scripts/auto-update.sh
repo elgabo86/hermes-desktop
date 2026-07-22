@@ -13,7 +13,7 @@ RELEASE_URL="https://github.com/elgabo86/hermes-desktop/releases/latest/download
 CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/hermes-desktop-version"
 
 # Récupérer le timestamp de la version distante
-REMOTE_VERSION=$(curl -fsS --connect-timeout 10 "$VERSION_URL" 2>/dev/null | head -1 | tr -d '[:space:]')
+REMOTE_VERSION=$(curl -fsSL --connect-timeout 10 "$VERSION_URL" 2>/dev/null | head -1 | tr -d '[:space:]')
 
 if [ -z "$REMOTE_VERSION" ]; then
     exit 0  # Pas de réseau
@@ -25,7 +25,7 @@ if [ -f "$CACHE_FILE" ] && [ "$(cat "$CACHE_FILE")" = "$REMOTE_VERSION" ]; then
 fi
 
 # Trouver le nom exact du fichier via la page de release (sans API)
-DL_PAGE=$(curl -fsS --connect-timeout 10 "https://github.com/elgabo86/hermes-desktop/releases/latest" 2>/dev/null)
+DL_PAGE=$(curl -fsSL --connect-timeout 10 "https://github.com/elgabo86/hermes-desktop/releases/latest" 2>/dev/null)
 APPIMAGE_NAME=$(echo "$DL_PAGE" | grep -o 'hermes-desktop-[0-9.]*-[0-9]*T[0-9]*Z-x86_64\.AppImage' | head -1)
 
 if [ -z "$APPIMAGE_NAME" ]; then
