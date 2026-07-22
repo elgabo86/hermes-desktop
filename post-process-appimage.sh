@@ -151,8 +151,8 @@ echo "  Update info: $UPDATE_INFO"
 # ── Étape 7: Générer le .zsync ───────────────────────────────────
 
 echo ">>> Génération du .zsync..."
-VERSION=$(echo "$BASENAME" | sed -n 's/^hermes-desktop-\([0-9.]*\)-x86_64/\1/p')
-DL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/v${VERSION}/${BASENAME}.AppImage"
+# Le tag de release est toujours 'latest' (écrasé à chaque build)
+DL_URL="https://github.com/${GITHUB_USER}/${GITHUB_REPO}/releases/download/latest/${BASENAME}.AppImage"
 
 zsyncmake \
     -u "$DL_URL" \

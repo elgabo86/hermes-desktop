@@ -44,9 +44,10 @@ fi
 cp "$APPIMAGE" "$OUTPUT_DIR/"
 echo "=== Build done: $OUTPUT_DIR/$(basename "$APPIMAGE") ==="
 
-# Renommer en hermes-desktop
+# Renommer en hermes-desktop avec timestamp (pour que l'auto-update détecte les changements)
 VERSION=$(echo "$(basename "$APPIMAGE")" | sed -n 's/^Hermes-\([0-9.]*\)-linux.*/\1/p')
-NEWNAME="hermes-desktop-${VERSION}-x86_64.AppImage"
+BUILD_TS=$(date -u +%Y%m%dT%H%M%SZ)
+NEWNAME="hermes-desktop-${VERSION}-${BUILD_TS}-x86_64.AppImage"
 mv "$OUTPUT_DIR/$(basename "$APPIMAGE")" "$OUTPUT_DIR/$NEWNAME"
 echo ">>> Renommé: $OUTPUT_DIR/$NEWNAME"
 APPIMAGE_NAME="$NEWNAME"

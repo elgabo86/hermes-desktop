@@ -32,23 +32,20 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq zsync squashfs-tools
 
-      - name: Get version
-        id: version
+      - name: Delete existing latest release (if any)
         run: |
-          VERSION=$(basename dist/hermes-desktop-*.AppImage | sed 's/hermes-desktop-\(.*\)-x86_64.*/\1/')
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
-      - name: Delete existing tag (if any)
-        run: |
-          gh release delete "v${{ steps.version.outputs.version }}" --yes --cleanup-tag 2>/dev/null || true
+          gh release delete latest --yes --cleanup-tag 2>/dev/null || true
         env:
           GH_TOKEN: ${{ github.token }}
 
       - name: Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: "v${{ steps.version.outputs.version }}"
-          name: "Hermes Desktop ${{ steps.version.outputs.version }}"
+          tag_name: latest
+          name: Hermes Desktop FR
+          body: |
+            Build horodaté de Hermes Desktop avec traduction française.
+            Le nom du fichier inclut la version et le timestamp.
           files: |
             dist/hermes-desktop-*.AppImage
             dist/hermes-desktop-*.AppImage.zsync
