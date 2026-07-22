@@ -8,7 +8,7 @@ Build d'AppImage Hermes Desktop avec trad française, distribué via elgabo86/he
 - **Plus de patches** — le fork contient directement fr.ts, composants modifiés, types/en/zh/catalog/languages
 - **Script** : `build-appimage.sh` clone le fork i18n → build → AppImage
 - **Une seule source de vérité** : le fork i18n = PR #48070 = AppImage
-- **Auto-update** : curl `releases/latest/download/VERSION` → compare cache → télécharge si différent. Pas d'API, pas de rate limit.
+- **Auto-update** : curl `releases/latest/download/VERSION` → compare cache → télécharge si différent.
 
 ## Workflow de mise à jour
 
