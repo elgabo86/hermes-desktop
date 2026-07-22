@@ -3,7 +3,7 @@
 AppImage non-officielle de [Hermes Desktop](https://github.com/NousResearch/hermes-agent) avec traduction française complète.
 
 - 🇫🇷 Interface entièrement en français
-- 🔄 Auto-update automatique au lancement
+- 🔄 Auto-update automatique au lancement (via fichier VERSION, sans API)
 
 ## Pourquoi ?
 
@@ -23,9 +23,9 @@ Pas de sudo nécessaire.
 
 ## Auto-update
 
-Au lancement, l'AppImage vérifie si une nouvelle version est disponible via
-l'API GitHub. Si oui, elle la télécharge et se remplace automatiquement avant
-de démarrer. Aucune configuration requise.
+Au lancement, l'AppImage télécharge `VERSION` depuis la release et compare
+avec un cache local. Si différent, elle télécharge la nouvelle AppImage avant
+de démarrer. Aucune API GitHub, aucun rate limit.
 
 ## Build
 
@@ -33,7 +33,7 @@ de démarrer. Aucune configuration requise.
 ./build-appimage.sh
 ```
 
-Build automatique quotidien à 06:00 UTC via GitHub Actions, ou déclenchement manuel.
+Build automatique quotidien à 06:00 UTC via GitHub Actions.
 
 ## License
 
