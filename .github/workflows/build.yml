@@ -32,6 +32,13 @@ jobs:
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq zsync squashfs-tools
 
+      - name: Generate zsync
+        run: |
+          APPIMAGE=$(ls dist/hermes-desktop-*.AppImage | head -1)
+          BASENAME=$(basename "$APPIMAGE")
+          zsyncmake -u "https://github.com/elgabo86/hermes-desktop/releases/download/latest/${BASENAME}" \
+            -o "dist/${BASENAME}.zsync" "$APPIMAGE"
+
       - name: Delete existing latest release (if any)
         run: |
           gh release delete latest --yes --cleanup-tag 2>/dev/null || true
