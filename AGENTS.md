@@ -20,6 +20,7 @@ Fichiers modifiés pour la locale française :
 - `components/chat/intro.tsx` — chargement intro-copy.fr.jsonl
 - `components/gateway-connecting-overlay.tsx` — i18n CONNECTING
 - `app/settings/uninstall-section.tsx` — i18n zone dangereuse
+- `app/settings/appearance-settings.tsx` — i18n search placeholder
 - `i18n/languages.test.ts` — tests regex FR
 
 ### upstream-files.patch
