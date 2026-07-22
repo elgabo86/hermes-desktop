@@ -1,33 +1,16 @@
-diff --git a/apps/desktop/src/app/settings/appearance-settings.tsx b/apps/desktop/src/app/settings/appearance-settings.tsx
-index 32deb34..13d4fa9 100644
---- a/apps/desktop/src/app/settings/appearance-settings.tsx
-+++ b/apps/desktop/src/app/settings/appearance-settings.tsx
-@@ -321,7 +321,7 @@ export function AppearanceSettings() {
-                   <input
-                     className="w-full rounded-lg border border-(--ui-stroke-tertiary) bg-(--ui-bg-quinary) px-3 py-1.5 text-[length:var(--conversation-caption-font-size)] outline-none placeholder:text-(--ui-text-tertiary) focus:border-(--ui-stroke-secondary)"
-                     onChange={event => setQuery(event.target.value)}
--                    placeholder="Search your themes or the VS Code Marketplace…"
-+                    placeholder={t.settings.appearance.themeSearchPlaceholder}
-                     spellCheck={false}
-                     value={query}
-                   />
 diff --git a/apps/desktop/src/app/settings/uninstall-section.tsx b/apps/desktop/src/app/settings/uninstall-section.tsx
-index 5ac21ac..0103d3b 100644
+index 5ac21ac80..2acaa307c 100644
 --- a/apps/desktop/src/app/settings/uninstall-section.tsx
 +++ b/apps/desktop/src/app/settings/uninstall-section.tsx
-@@ -1,9 +1,10 @@
+@@ -1,6 +1,7 @@
  import { useEffect, useState } from 'react'
  
  import { Button } from '@/components/ui/button'
--import type { DesktopUninstallMode, DesktopUninstallSummary } from '@/global'
 +import { useI18n } from '@/i18n/context'
+ import type { DesktopUninstallMode, DesktopUninstallSummary } from '@/global'
  import { AlertTriangle, Loader2, Trash2 } from '@/lib/icons'
  import { cn } from '@/lib/utils'
-+import type { DesktopUninstallMode, DesktopUninstallSummary } from '@/global'
- 
- import { SectionHeading } from './primitives'
- 
-@@ -17,51 +18,45 @@ interface ModeOption {
+@@ -17,35 +18,9 @@ interface ModeOption {
    needsAgent: boolean
  }
  
@@ -61,12 +44,18 @@ index 5ac21ac..0103d3b 100644
 -
  export function UninstallSection() {
 +  const { t } = useI18n()
++
    const [summary, setSummary] = useState<DesktopUninstallSummary | null>(null)
    const [loading, setLoading] = useState(true)
    const [pending, setPending] = useState<DesktopUninstallMode | null>(null)
-   const [running, setRunning] = useState(false)
-   const [error, setError] = useState<string | null>(null)
+@@ -90,9 +65,33 @@ export function UninstallSection() {
+   }
  
+   // Gate the agent-removing options on whether an agent is actually present.
+-  // A future lite client that ships without the bundled agent shows GUI-only.
+   const agentInstalled = summary?.agent_installed ?? false
+-  const visibleOptions = OPTIONS.filter(opt => agentInstalled || !opt.needsAgent)
++
 +  const options: ModeOption[] = [
 +    {
 +      mode: 'gui',
@@ -91,59 +80,24 @@ index 5ac21ac..0103d3b 100644
 +    }
 +  ]
 +
-   useEffect(() => {
-     let alive = true
-     const bridge = window.hermesDesktop?.uninstall
--
-     if (!bridge) {
-       setLoading(false)
--
-       return
-     }
--
-     void bridge
-       .summary()
-       .then(result => {
-@@ -77,14 +72,12 @@ export function UninstallSection() {
-           setLoading(false)
-         }
-       })
--
-     return () => {
-       alive = false
-     }
-   }, [])
- 
-   const bridge = window.hermesDesktop?.uninstall
--
-   if (!bridge) {
-     return null
-   }
-@@ -92,21 +85,18 @@ export function UninstallSection() {
-   // Gate the agent-removing options on whether an agent is actually present.
-   // A future lite client that ships without the bundled agent shows GUI-only.
-   const agentInstalled = summary?.agent_installed ?? false
--  const visibleOptions = OPTIONS.filter(opt => agentInstalled || !opt.needsAgent)
 +  const visibleOptions = options.filter(opt => agentInstalled || !opt.needsAgent)
  
    const handleConfirm = async () => {
      if (!pending) {
-       return
-     }
--
-     setRunning(true)
-     setError(null)
--
-     try {
+@@ -106,11 +105,10 @@ export function UninstallSection() {
        const result = await bridge.run(pending)
--
+ 
        if (!result.ok) {
 -        setError(result.message || result.error || 'Uninstall could not start.')
-+        setError(result.message || result.error || t.uninstall.couldNotStart)
++        setError(result.message || result.error || "Échec du démarrage du désinstalleur")
          setRunning(false)
          setPending(null)
        }
-@@ -118,43 +108,50 @@ export function UninstallSection() {
+-      // On success the app quits shortly; keep the spinner up until it does.
+     } catch (err) {
+       setError(err instanceof Error ? err.message : String(err))
+       setRunning(false)
+@@ -118,44 +116,49 @@ export function UninstallSection() {
      }
    }
  
@@ -173,7 +127,7 @@ index 5ac21ac..0103d3b 100644
              {summary?.running_app_path && (
 -              <p className="mt-1 font-mono text-[0.68rem] text-muted-foreground/60">App: {summary.running_app_path}</p>
 +              <p className="mt-1 font-mono text-[0.68rem] text-muted-foreground/60">
-+                App: {summary.running_app_path}
++                Application : {summary.running_app_path}
 +              </p>
              )}
              {error && <p className="mt-2 text-xs text-destructive">{error}</p>}
@@ -198,22 +152,23 @@ index 5ac21ac..0103d3b 100644
          ) : (
            <div className="flex flex-col gap-2">
 -            <p className="text-sm font-medium">Uninstall Hermes</p>
-+            <p className="text-sm font-medium">{t.uninstall.uninstallHermes}</p>
-             <p className="text-xs text-muted-foreground">
+-            <p className="text-xs text-muted-foreground">
 -              Choose how much to remove. The app closes to finish the job; reopen the installer any time to come back.
-+              {t.uninstall.uninstallDescription}
-             </p>
+-            </p>
++            <p className="text-sm font-medium">{t.uninstall.uninstallHermes}</p>
++            <p className="text-xs text-muted-foreground">{t.uninstall.uninstallDescription}</p>
              <div className="mt-1 flex flex-col gap-2">
                {visibleOptions.map(opt => (
+                 <button
 diff --git a/apps/desktop/src/components/chat/intro.tsx b/apps/desktop/src/components/chat/intro.tsx
-index 6dc365e..3b47f70 100644
+index 6dc365e64..a716ecb0d 100644
 --- a/apps/desktop/src/components/chat/intro.tsx
 +++ b/apps/desktop/src/components/chat/intro.tsx
-@@ -1,8 +1,9 @@
+@@ -1,8 +1,10 @@
  import { type CSSProperties, useState } from 'react'
  
--import { capitalize, normalize } from '@/lib/text'
 +import { useI18n } from '@/i18n'
+ import { capitalize, normalize } from '@/lib/text'
  
 -import introCopyJsonl from './intro-copy.jsonl?raw'
 +import introCopyEn from './intro-copy.jsonl?raw'
@@ -221,24 +176,7 @@ index 6dc365e..3b47f70 100644
  
  type IntroCopy = {
    headline: string
-@@ -44,14 +45,14 @@ const FALLBACK_COPY: IntroCopy[] = [
- ]
- 
- function normalizeKey(value?: string): string {
--  return normalize(value)
-+  return (value || '').trim().toLowerCase()
- }
- 
- function titleize(value: string): string {
-   return value
-     .split(/[-_\s]+/)
-     .filter(Boolean)
--    .map(capitalize)
-+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
-     .join(' ')
- }
- 
-@@ -103,15 +104,22 @@ function parseIntroCopy(raw: string): Record<string, IntroCopy[]> {
+@@ -103,15 +105,25 @@ function parseIntroCopy(raw: string): Record<string, IntroCopy[]> {
    return byPersonality
  }
  
@@ -248,248 +186,98 @@ index 6dc365e..3b47f70 100644
 +  fr: parseIntroCopy(introCopyFr)
 +}
 +
-+function copyForLocale(locale: string): Record<string, IntroCopy[]> {
-+  return INTRO_COPY_BY_LOCALE[locale] || INTRO_COPY_BY_LOCALE.en
++function copySetForLocale(locale: string): Record<string, IntroCopy[]> {
++  // Use the two-letter prefix to match 'fr', 'fr-FR', 'fr_CA', etc.
++  const prefix = locale.split(/[-_]/)[0] || ''
++  return INTRO_COPY_BY_LOCALE[prefix] || INTRO_COPY_BY_LOCALE.en
 +}
  
 -function neutralCopy(): IntroCopy[] {
 -  return INTRO_COPY_BY_PERSONALITY.none || INTRO_COPY_BY_PERSONALITY.default || FALLBACK_COPY
-+function neutralCopy(byPersonality: Record<string, IntroCopy[]>): IntroCopy[] {
++function neutralCopy(locale: string): IntroCopy[] {
++  const byPersonality = copySetForLocale(locale)
 +  return byPersonality.none || byPersonality.default || FALLBACK_COPY
  }
  
- function fallbackCopyForPersonality(personalityKey: string): IntroCopy[] {
+-function fallbackCopyForPersonality(personalityKey: string): IntroCopy[] {
++function fallbackCopyForPersonality(personalityKey: string, locale: string): IntroCopy[] {
    if (NEUTRAL_PERSONALITIES.has(personalityKey)) {
 -    return neutralCopy()
-+    return FALLBACK_COPY
++    return neutralCopy(locale)
    }
  
    const label = titleize(personalityKey)
-@@ -146,19 +154,26 @@ function pickCopy(copies: IntroCopy[], seed = 0): IntroCopy {
+@@ -144,21 +156,23 @@ function pickCopy(copies: IntroCopy[], seed = 0): IntroCopy {
+   return copies[Math.abs(seed) % copies.length] || FALLBACK_COPY[0]
+ }
  
- const WORDMARK = 'HERMES AGENT'
- 
+-const WORDMARK = 'HERMES AGENT'
+-
 -function resolveCopy(personality?: string, seed?: number): IntroCopy {
-+function resolveCopy(
-+  locale: string,
-+  byPersonality: Record<string, IntroCopy[]>,
-+  personality?: string,
-+  seed?: number
-+): IntroCopy {
++function resolveCopy(locale: string, personality?: string, seed?: number): IntroCopy {
    const personalityKey = normalizeKey(personality)
++  const byPersonality = copySetForLocale(locale)
  
    const copies = NEUTRAL_PERSONALITIES.has(personalityKey)
 -    ? INTRO_COPY_BY_PERSONALITY[personalityKey] || neutralCopy()
 -    : INTRO_COPY_BY_PERSONALITY[personalityKey] || fallbackCopyForPersonality(personalityKey)
-+    ? byPersonality[personalityKey] || neutralCopy(byPersonality)
-+    : byPersonality[personalityKey] || fallbackCopyForPersonality(personalityKey)
++    ? byPersonality[personalityKey] || neutralCopy(locale)
++    : byPersonality[personalityKey] || fallbackCopyForPersonality(personalityKey, locale)
  
    return pickCopy(copies, seed)
  }
  
++const WORDMARK = 'HERMES AGENT'
++
  export function Intro({ personality, seed }: IntroProps) {
 +  const { locale } = useI18n()
    const [mountSeed] = useState(() => Math.floor(Math.random() * 100000))
 -  const copy = resolveCopy(personality, mountSeed + (seed ?? 0))
-+  const byPersonality = copyForLocale(locale)
-+  const copy = resolveCopy(locale, byPersonality, personality, mountSeed + (seed ?? 0))
++  const copy = resolveCopy(locale, personality, mountSeed + (seed ?? 0))
  
    return (
      <div
 diff --git a/apps/desktop/src/components/gateway-connecting-overlay.tsx b/apps/desktop/src/components/gateway-connecting-overlay.tsx
-index 0268755..6bdd0b6 100644
+index 0268755d5..5b00d4012 100644
 --- a/apps/desktop/src/components/gateway-connecting-overlay.tsx
 +++ b/apps/desktop/src/components/gateway-connecting-overlay.tsx
-@@ -1,15 +1,15 @@
+@@ -1,6 +1,7 @@
  import { useStore } from '@nanostores/react'
  import { useEffect, useRef, useState } from 'react'
  
--import { DecodeText } from '@/components/ui/decode-text'
 +import { useI18n } from '@/i18n'
+ import { DecodeText } from '@/components/ui/decode-text'
  import { cn } from '@/lib/utils'
  import { $desktopBoot } from '@/store/boot'
--import { $gatewaySwitching } from '@/store/gateway-switch'
- import { $gatewayState } from '@/store/session'
+@@ -9,7 +10,7 @@ import { $gatewayState } from '@/store/session'
  
--// Decode mechanics live in the shared <DecodeText> primitive
--// (components/ui/decode-text.tsx). "CONN" stays legible via prefix={4}.
+ // Decode mechanics live in the shared <DecodeText> primitive
+ // (components/ui/decode-text.tsx). "CONN" stays legible via prefix={4}.
 -const TEXT = 'CONNECTING'
-+// Even-weight mono ascii so cycling glyphs don't jump width (matches the
-+// nousnet-web download-button decode effect).
-+const SCRAMBLE_CHARS = '/\\|-=_+<>~:*'
-+const TICK_MS = 45
++const PREFIX_LEN = 4
  
  // Exit choreography (ms): text fades down + out, hold, then the overlay fades.
  const TEXT_OUT_MS = 360
-@@ -35,28 +35,22 @@ function forcedPreview(): boolean {
-   }
- }
- 
--function prefersReducedMotion(): boolean {
--  return typeof window !== 'undefined' && Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
-+function scrambledTail(tail: string, resolvedCount: number): string {
-+  return Array.from(tail, (ch, i) =>
-+    i < resolvedCount ? ch : SCRAMBLE_CHARS[(Math.random() * SCRAMBLE_CHARS.length) | 0]
-+  ).join('')
+@@ -40,6 +41,8 @@ function prefersReducedMotion(): boolean {
  }
  
  export function GatewayConnectingOverlay() {
 +  const { t } = useI18n()
-+  const PREFIX = t.boot.steps.connectingPrefix
-+  const TAIL = t.boot.steps.connectingTail
-+
++  const TEXT = t.common.connecting.toUpperCase()
    const gatewayState = useStore($gatewayState)
    const boot = useStore($desktopBoot)
--  const gatewaySwitching = useStore($gatewaySwitching)
-   const [previewing] = useState(forcedPreview)
--  const reduce = prefersReducedMotion()
--  // Under reduced motion, skip the multi-phase exit choreography (text-out →
--  // hold → overlay fade) and jump straight to gone so the overlay unmounts
--  // the instant the gateway opens. E2E screenshots rely on this to avoid
--  // catching the overlay mid-fade.
-+  const [tail, setTail] = useState(TAIL)
-   const [phase, setPhase] = useState<Phase>('live')
--  // Once cold boot has completed once, never resurrect the fullscreen overlay
--  // — soft gateway switches keep the shell and reskeleton the sidebar instead.
--  const coldBootDoneRef = useRef(false)
--
--  if (!boot.running && boot.progress >= 100 && !boot.error) {
--    coldBootDoneRef.current = true
--  }
- 
-   // The full-screen connecting overlay is for initial boot only. After a
-   // healthy boot, flaky networks / sleep-wake can drop the socket and flip the
-@@ -64,10 +58,7 @@ export function GatewayConnectingOverlay() {
-   // the chat then — users should still be able to type drafts, open settings,
-   // and recover instead of staring at a modal CONNECTING screen.
-   const initialBootActive = boot.visible || boot.running || boot.progress < 100
--
--  const connecting =
--    !coldBootDoneRef.current && !gatewaySwitching && gatewayState !== 'open' && !boot.error && initialBootActive
--
-+  const connecting = gatewayState !== 'open' && !boot.error && initialBootActive
-   // Latches once we've actually shown the overlay, so the brief frame where
-   // gatewayState flips to "open" (connecting -> false) before the exit phase
-   // kicks in doesn't unmount us and cause a flash.
-@@ -77,6 +68,36 @@ export function GatewayConnectingOverlay() {
-     shownRef.current = true
-   }
- 
-+  // Decode loop — only while live (freeze the resolved word during the exit).
-+  useEffect(() => {
-+    if (phase !== 'live' || (!previewing && !connecting)) {
-+      return
-+    }
-+
-+    let resolved = 0
-+    let hold = 0
-+
-+    const id = window.setInterval(() => {
-+      if (resolved >= TAIL.length) {
-+        hold += 1
-+
-+        if (hold > 16) {
-+          resolved = 0
-+          hold = 0
-+        }
-+
-+        setTail(TAIL)
-+
-+        return
-+      }
-+
-+      resolved += 0.5
-+      setTail(scrambledTail(TAIL, Math.floor(resolved)))
-+    }, TICK_MS)
-+
-+    return () => window.clearInterval(id)
-+  }, [phase, previewing, connecting, TAIL])
-+
-   // Kick off the exit when connected: real connect, or a faked timer in preview.
-   useEffect(() => {
-     if (phase !== 'live') {
-@@ -84,19 +105,19 @@ export function GatewayConnectingOverlay() {
-     }
- 
-     if (previewing) {
--      const id = window.setTimeout(() => setPhase('text-out'), PREVIEW_CONNECT_MS)
-+      const id = window.setTimeout(() => {
-+        setTail(TAIL)
-+        setPhase('text-out')
-+      }, PREVIEW_CONNECT_MS)
- 
-       return () => window.clearTimeout(id)
-     }
- 
-     if (gatewayState === 'open' && shownRef.current) {
--      // Under reduced motion, skip the multi-phase exit choreography
--      // (text-out → hold → overlay fade) and jump straight to gone so the
--      // overlay unmounts the instant the gateway opens. E2E screenshots
--      // rely on this to avoid catching the overlay mid-fade.
--      setPhase(reduce ? 'gone' : 'text-out')
-+      setTail(TAIL)
-+      setPhase('text-out')
-     }
--  }, [phase, previewing, gatewayState, reduce])
-+  }, [phase, previewing, gatewayState, TAIL])
- 
-   // Advance the exit choreography: text-out -> overlay-out -> gone.
-   useEffect(() => {
-@@ -114,11 +135,14 @@ export function GatewayConnectingOverlay() {
- 
-     // Preview replays so we can keep watching the transition.
-     if (phase === 'gone' && previewing) {
--      const id = window.setTimeout(() => setPhase('live'), PREVIEW_REPLAY_MS)
-+      const id = window.setTimeout(() => {
-+        setTail(TAIL)
-+        setPhase('live')
-+      }, PREVIEW_REPLAY_MS)
- 
-       return () => window.clearTimeout(id)
-     }
--  }, [phase, previewing])
-+  }, [phase, previewing, TAIL])
- 
-   // Boot failed — BootFailureOverlay owns the screen; don't linger behind it.
-   if (boot.error && !previewing) {
-@@ -145,16 +169,21 @@ export function GatewayConnectingOverlay() {
-         overlayHidden ? 'pointer-events-none opacity-0' : 'opacity-100'
-       )}
-     >
--      <DecodeText
--        active={phase === 'live' && (previewing || connecting)}
-+      <style>{'@keyframes gco-cursor { 0%, 49% { opacity: 1 } 50%, 100% { opacity: 0 } }'}</style>
-+      <span
-         className={cn(
--          'pl-[0.4em] text-(--theme-primary) transition duration-300 ease-out',
-+          'inline-flex items-center pl-[0.4em] font-mono text-[0.64rem] font-semibold uppercase tracking-[0.4em] tabular-nums text-(--theme-primary) transition duration-300 ease-out',
-           leaving ? 'translate-y-2 opacity-0 saturate-0' : 'translate-y-0 opacity-100 saturate-100'
-         )}
--        cursor
--        prefix={4}
--        text={TEXT}
--      />
-+      >
-+        {PREFIX}
-+        {tail}
-+        <span
-+          aria-hidden="true"
-+          className="dither ml-0.5 inline-block size-2 shrink-0 -translate-y-px rounded-[1px]"
-+          style={{ animation: 'gco-cursor 1s step-end infinite' }}
-+        />
-+      </span>
-     </div>
-   )
- }
+   const gatewaySwitching = useStore($gatewaySwitching)
 diff --git a/apps/desktop/src/i18n/catalog.ts b/apps/desktop/src/i18n/catalog.ts
-index 19556cb..5ff4bcc 100644
+index 19556cb45..09362b5ae 100644
 --- a/apps/desktop/src/i18n/catalog.ts
 +++ b/apps/desktop/src/i18n/catalog.ts
-@@ -3,9 +3,11 @@ import { ja } from './ja'
+@@ -1,4 +1,5 @@
+ import { en } from './en'
++import { fr } from './fr'
+ import { ja } from './ja'
  import type { Locale, Translations } from './types'
  import { zh } from './zh'
- import { zhHant } from './zh-hant'
-+import { fr } from './fr'
+@@ -6,6 +7,7 @@ import { zhHant } from './zh-hant'
  
  export const TRANSLATIONS: Record<Locale, Translations> = {
    en,
@@ -497,74 +285,8 @@ index 19556cb..5ff4bcc 100644
    zh,
    'zh-hant': zhHant,
    ja
-diff --git a/apps/desktop/src/i18n/context.tsx b/apps/desktop/src/i18n/context.tsx
-index 103a630..f316b4b 100644
---- a/apps/desktop/src/i18n/context.tsx
-+++ b/apps/desktop/src/i18n/context.tsx
-@@ -31,6 +31,30 @@ const defaultConfigClient: I18nConfigClient = {
-   }
- }
- 
-+const I18N_LOCALE_KEY = 'hermes-i18n-locale'
-+
-+function readStoredLocale(): unknown {
-+  try {
-+    if (typeof window !== 'undefined' && window.localStorage) {
-+      return window.localStorage.getItem(I18N_LOCALE_KEY)
-+    }
-+  } catch {
-+    // localStorage may throw in sandboxed contexts.
-+  }
-+
-+  return undefined
-+}
-+
-+function storeLocale(locale: Locale): void {
-+  try {
-+    if (typeof window !== 'undefined' && window.localStorage) {
-+      window.localStorage.setItem(I18N_LOCALE_KEY, locale)
-+    }
-+  } catch {
-+    // Silently ignore — in-memory state is the source of truth.
-+  }
-+}
-+
- function isRecord(value: unknown): value is Record<string, unknown> {
-   return typeof value === 'object' && value !== null && !Array.isArray(value)
- }
-@@ -82,7 +106,9 @@ export interface I18nProviderProps {
- }
- 
- export function I18nProvider({ children, configClient = defaultConfigClient, initialLocale }: I18nProviderProps) {
--  const [locale, setLocaleState] = useState<Locale>(() => normalizeLocale(initialLocale))
-+  const [locale, setLocaleState] = useState<Locale>(() =>
-+    normalizeLocale(initialLocale ?? readStoredLocale())
-+  )
-   const [isLoadingConfig, setIsLoadingConfig] = useState(false)
-   const [isSavingLocale, setIsSavingLocale] = useState(false)
-   const [configLoadError, setConfigLoadError] = useState<Error | null>(null)
-@@ -108,7 +134,9 @@ export function I18nProvider({ children, configClient = defaultConfigClient, ini
-       .getConfig()
-       .then(config => {
-         if (!cancelled) {
--          setLocaleState(normalizeLocale(getConfigDisplayLanguage(config)))
-+          const resolvedLocale = normalizeLocale(getConfigDisplayLanguage(config))
-+          setLocaleState(resolvedLocale)
-+          storeLocale(resolvedLocale)
-         }
-       })
-       .catch(error => {
-@@ -148,6 +176,8 @@ export function I18nProvider({ children, configClient = defaultConfigClient, ini
-         if (!result.ok) {
-           throw new Error('Failed to save language')
-         }
-+
-+        storeLocale(next)
-       } catch (error) {
-         const nextError = toError(error)
- 
 diff --git a/apps/desktop/src/i18n/languages.test.ts b/apps/desktop/src/i18n/languages.test.ts
-index 792aad5..a540215 100644
+index 792aad5f5..a540215fb 100644
 --- a/apps/desktop/src/i18n/languages.test.ts
 +++ b/apps/desktop/src/i18n/languages.test.ts
 @@ -15,27 +15,44 @@ describe('desktop i18n languages', () => {
@@ -613,12 +335,12 @@ index 792aad5..a540215 100644
      expect(localeConfigValue('zh-hant')).toBe('zh-hant')
      expect(localeConfigValue('ja')).toBe('ja')
 diff --git a/apps/desktop/src/i18n/languages.ts b/apps/desktop/src/i18n/languages.ts
-index 96daf9b..d941695 100644
+index 96daf9b59..9a0348248 100644
 --- a/apps/desktop/src/i18n/languages.ts
 +++ b/apps/desktop/src/i18n/languages.ts
-@@ -17,6 +17,12 @@ export const LOCALE_OPTIONS = [
-     englishName: 'Simplified Chinese',
-     configValue: 'zh'
+@@ -11,6 +11,12 @@ export const LOCALE_OPTIONS = [
+     englishName: 'English',
+     configValue: 'en'
    },
 +  {
 +    id: 'fr',
@@ -627,16 +349,15 @@ index 96daf9b..d941695 100644
 +    configValue: 'fr'
 +  },
    {
-     id: 'zh-hant',
-     name: '繁體中文',
-@@ -50,6 +56,18 @@ const LOCALE_ALIASES: Record<string, Locale> = {
-   zh_hans: 'zh',
-   'zh-hans-cn': 'zh',
-   zh_hans_cn: 'zh',
+     id: 'zh',
+     name: '简体中文',
+@@ -43,6 +49,18 @@ const LOCALE_ALIASES: Record<string, Locale> = {
+   en: 'en',
+   'en-us': 'en',
+   en_us: 'en',
 +  fr: 'fr',
 +  french: 'fr',
 +  francais: 'fr',
-+  français: 'fr',
 +  'fr-fr': 'fr',
 +  fr_fr: 'fr',
 +  'fr-ca': 'fr',
@@ -645,9 +366,10 @@ index 96daf9b..d941695 100644
 +  fr_be: 'fr',
 +  'fr-ch': 'fr',
 +  fr_ch: 'fr',
-   'zh-tw': 'zh-hant',
-   zh_tw: 'zh-hant',
-   'zh-hk': 'zh-hant',
++  français: 'fr',
+   zh: 'zh',
+   'zh-cn': 'zh',
+   zh_cn: 'zh',
 @@ -67,6 +85,8 @@ const LOCALE_ALIASES: Record<string, Locale> = {
    ja_jp: 'ja'
  }
@@ -662,7 +384,7 @@ index 96daf9b..d941695 100644
    }
  
 -  return LOCALE_ALIASES[normalize(value)] ?? DEFAULT_LOCALE
-+  const normalized = value.trim().toLowerCase()
++  const normalized = normalize(value)
 +
 +  if (FRENCH_REGION_LOCALE_RE.test(normalized)) {
 +    return 'fr'
@@ -677,249 +399,9 @@ index 96daf9b..d941695 100644
 +    return false
 +  }
 +
-+  const normalized = value.trim().toLowerCase()
++  const normalized = normalize(value)
 +
 +  return FRENCH_REGION_LOCALE_RE.test(normalized) || LOCALE_ALIASES[normalized] != null
  }
  
  export function localeConfigValue(locale: Locale): string {
-diff --git a/apps/desktop/src/i18n/types.ts b/apps/desktop/src/i18n/types.ts
-index d0ead27..69d41fa 100644
---- a/apps/desktop/src/i18n/types.ts
-+++ b/apps/desktop/src/i18n/types.ts
-@@ -5,7 +5,7 @@
- // partial locales should use `defineLocale()` so missing desktop-only strings
- // fall back to English while new keys remain type-checked.
- 
--export type Locale = 'en' | 'zh' | 'zh-hant' | 'ja'
-+export type Locale = 'en' | 'fr' | 'zh' | 'zh-hant' | 'ja'
- 
- export type ToolTitleKey =
-   | 'browser_click'
-@@ -115,6 +115,8 @@ export interface Translations {
-       loadingSessions: string
-       startingDesktopConnection: string
-       startingHermesDesktop: string
-+    connectingPrefix: string
-+    connectingTail: string
-     }
-     errors: {
-       backgroundExited: string
-@@ -355,6 +357,7 @@ export interface Translations {
-       installed: (name: string) => string
-       removeTheme: string
-       importedBadge: string
-+      themeSearchPlaceholder: string
-       pet: {
-         title: string
-         intro: string
-@@ -2288,4 +2291,40 @@ export interface Translations {
-       toggle: string
-     }
-   }
-+
-+  uninstall: {
-+    dangerZone: string
-+    checking: string
-+    confirmTitle: string
-+    confirmBody: (consequence: string) => string
-+    uninstalling: string
-+    yesUninstall: string
-+    couldNotStart: string
-+    cancel: string
-+    uninstallHermes: string
-+    uninstallDescription: string
-+    options: {
-+      gui: { title: string; description: string; consequence: string }
-+      lite: { title: string; description: string; consequence: string }
-+      full: { title: string; description: string; consequence: string }
-+    }
-+  }
-+
-+  billing: {
-+    title: string
-+    plan: string
-+    payment: string
-+    oneTimeTopup: string
-+    automaticRefill: string
-+    buy: string
-+    retry: string
-+    openPortal: string
-+    refresh: string
-+    updated: (ago: string) => string
-+    processing: string
-+    added: (amount: string) => string
-+    customAmount: string
-+    fixture: string
-+  }
-+
- }
-diff --git a/apps/desktop/src/app/settings/billing/index.tsx b/apps/desktop/src/app/settings/billing/index.tsx
-index 2d234d7..fd19068 100644
---- a/apps/desktop/src/app/settings/billing/index.tsx
-+++ b/apps/desktop/src/app/settings/billing/index.tsx
-@@ -1,6 +1,8 @@
- import { useQueryClient } from '@tanstack/react-query'
- import { useEffect, useMemo, useState } from 'react'
- 
-+import { useI18n } from '@/i18n'
-+
- import { Button } from '@/components/ui/button'
- import { Input } from '@/components/ui/input'
- import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-@@ -113,6 +115,8 @@ function AccountRow({ billing, row }: { billing?: BillingStateResponse; row: Bil
- }
- 
- function BuyCreditsRow({ billing, row }: { billing: BillingStateResponse; row: BillingAccountRowView }) {
-+  const { t } = useI18n()
-+  const b = t.billing
-   const presets = useMemo(
-     () =>
-       billing.charge_presets.map((amount, index) => ({
-@@ -157,7 +161,7 @@ function BuyCreditsRow({ billing, row }: { billing: BillingStateResponse; row: B
-             </Button>
-           ))}
-           <Input
--            aria-label="Custom credit amount"
-+            aria-label={b.customAmount}
-             className="w-24 py-[3px]"
-             disabled={controlsDisabled}
-             inputMode="decimal"
-@@ -214,12 +218,14 @@ function BuyCreditsOutcome({
-   onRetry: () => void
-   outcome: ReturnType<typeof useChargeFlow>['outcome']
- }) {
-+  const { t } = useI18n()
-+  const b = t.billing
-   const stepUp = useStepUpFlow()
- 
-   if (busy) {
-     return (
-       <div className="mt-2 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
--        Processing… checking settlement
-+        {b.processing}
-       </div>
-     )
-   }
-@@ -231,7 +237,7 @@ function BuyCreditsOutcome({
-   if (outcome.kind === 'success') {
-     return (
-       <div className="mt-2 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
--        {formatMoney(outcome.amountUsd ?? amount)} added. Balance is refreshing.
-+        b.added(formatMoney(outcome.amountUsd ?? amount))
-       </div>
-     )
-   }
-@@ -244,7 +250,7 @@ function BuyCreditsOutcome({
-         </span>
-         {outcome.portalUrl && (
-           <Button onClick={() => onPortal(outcome.portalUrl)} size="sm" type="button" variant="outline">
--            Open portal
-+            {b.openPortal}
-             <ExternalLink className="size-3.5" />
-           </Button>
-         )}
-@@ -267,7 +273,7 @@ function BuyCreditsOutcome({
-       {outcome.action?.type === 'step_up' && <StepUpInlineAction flow={stepUp} />}
-       {portalUrl && (
-         <Button onClick={() => onPortal(portalUrl)} size="sm" type="button" variant="outline">
--          Open portal
-+          {b.openPortal}
-           <ExternalLink className="size-3.5" />
-         </Button>
-       )}
-@@ -362,6 +368,8 @@ function UsageRefreshRow({
-   onRefresh: () => void
-   updatedAt: number
- }) {
-+  const { t } = useI18n()
-+  const b = t.billing
-   const [now, setNow] = useState(() => Date.now())
- 
-   useEffect(() => {
-@@ -380,10 +388,10 @@ function UsageRefreshRow({
- 
-   return (
-     <div className="flex min-w-0 items-center justify-end gap-1.5 pt-1 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
--      <span>Updated {formatUsageUpdatedAgo(updatedAt, now)}</span>
--      <Tip label="Refresh">
-+      <span>b.updated(formatUsageUpdatedAgo(updatedAt, now))</span>
-+      <Tip label={b.refresh}>
-         <Button
--          aria-label="Refresh"
-+          aria-label={b.refresh}
-           className="size-7 p-0 text-(--ui-text-tertiary)"
-           disabled={isFetching}
-           onClick={onRefresh}
-@@ -405,10 +413,12 @@ function BillingFixtureSelect({
-   onValueChange: (value: BillingFixtureSelection) => void
-   value: BillingFixtureSelection
- }) {
-+  const { t: _t } = useI18n()
-+  const _b = _t.billing
-   return (
-     <Select onValueChange={value => onValueChange(value as BillingFixtureSelection)} value={value}>
-       <SelectTrigger
--        aria-label="Billing fixture"
-+        aria-label={_b.fixture}
-         className="h-7 w-32 border-transparent bg-transparent px-1.5 text-xs font-normal text-(--ui-text-tertiary) shadow-none hover:bg-muted/40 focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=open]:bg-muted/40"
-         size="sm"
-       >
-@@ -433,11 +443,13 @@ function BillingHeader({
-   fixtureName?: BillingFixtureSelection
-   onFixtureChange?: (value: BillingFixtureSelection) => void
- }) {
-+  const { t } = useI18n()
-+  const b = t.billing
-   return (
-     <div className="mb-2.5 flex items-center justify-between gap-3 pt-2 text-[length:var(--conversation-text-font-size)] font-medium">
-       <div className="flex min-w-0 items-center gap-2">
-         <BarChart3 className="size-4 shrink-0 text-muted-foreground" />
--        <span>Billing</span>
-+        <span>{b.title}</span>
-       </div>
-       {import.meta.env.DEV && fixtureName && onFixtureChange ? (
-         <BillingFixtureSelect onValueChange={onFixtureChange} value={fixtureName} />
-@@ -453,6 +465,9 @@ function BillingSettingsContent({
-   fixtureName?: BillingFixtureSelection
-   onFixtureChange?: (value: BillingFixtureSelection) => void
- }) {
-+  const { t } = useI18n()
-+  const b = t.billing
-+
-   const [subView, setSubView] = useRouteEnumParam<BillingSubView>('bview', BILLING_VIEWS, 'overview')
- 
-   // Fixture mode flows through the SAME query path — the simulated api (supplied by
-@@ -503,28 +518,28 @@ function BillingSettingsContent({
- 
-       {view.plan && (
-         <div className="mb-5">
--          <SectionHeading icon={Package} title="Plan" />
-+          <SectionHeading icon={Package} title={b.plan} />
-           <CurrentPlanCard onViewPlans={() => setSubView('plans')} plan={view.plan} />
-         </div>
-       )}
- 
-       {paymentRow && (
-         <div className="mb-5">
--          <SectionHeading icon={Lock} title="Payment" />
-+          <SectionHeading icon={Lock} title={b.payment} />
-           <AccountRow billing={billing} row={paymentRow} />
-         </div>
-       )}
- 
-       {topupRow && (
-         <div className="mb-5">
--          <SectionHeading icon={Plus} title="One-time top-up" />
-+          <SectionHeading icon={Plus} title={b.oneTimeTopup} />
-           <AccountRow billing={billing} row={topupRow} />
-         </div>
-       )}
- 
-       {refillRow && (
-         <div className="mb-5">
--          <SectionHeading icon={RefreshCw} title="Automatic refill" />
-+          <SectionHeading icon={RefreshCw} title={b.automaticRefill} />
-           <AccountRow billing={billing} row={refillRow} />
-         </div>
-       )}

@@ -1,132 +1,144 @@
 diff --git a/apps/desktop/src/i18n/en.ts b/apps/desktop/src/i18n/en.ts
-index 532a52a..086b102 100644
+index 30d6015d0..c0eea8630 100644
 --- a/apps/desktop/src/i18n/en.ts
 +++ b/apps/desktop/src/i18n/en.ts
-@@ -69,7 +69,9 @@ export const en: Translations = {
-       loadingSettings: 'Loading Hermes settings',
-       loadingSessions: 'Loading recent sessions',
-       startingDesktopConnection: 'Starting desktop connection',
--      startingHermesDesktop: 'Starting Hermes Desktop…'
-+      startingHermesDesktop: 'Starting Hermes Desktop…',
-+      connectingPrefix: 'CONN',
-+      connectingTail: 'ECTING',
-     },
-     errors: {
-       backgroundExited: 'Hermes background process exited.',
-@@ -441,6 +443,7 @@ export const en: Translations = {
-       installed: name => `Installed “${name}”.`,
-       removeTheme: 'Remove theme',
-       importedBadge: 'Imported',
-+      themeSearchPlaceholder: 'Search your themes or the VS Code Marketplace…',
-       pet: {
-         title: 'Pet',
-         intro:
-@@ -2710,5 +2713,41 @@ export const en: Translations = {
+@@ -767,7 +767,8 @@ export const en: Translations = {
+       defaultsFailed: 'Failed to save model defaults',
+       auxiliaryTitle: 'Auxiliary models',
+       resetAllToMain: 'Reset all to main',
+-      auxiliaryDesc: 'Helper tasks run on the main model by default. Assign a dedicated model to any task to override.',
++      staleAuxWarning: (count, names, provider) => `${count} auxiliary task${count === 1 ? '' : 's'} (${names}) still run${count === 1 ? 's' : ''} on ${provider}, not your main model.`,
++      auxiliaryDesc: 'Auxiliary tasks use the main model by default. Assign a dedicated model to a task to override.',
+       setToMain: 'Set to main',
+       change: 'Change',
+       autoUseMain: 'auto · use main model',
+@@ -2711,5 +2712,35 @@ export const en: Translations = {
        description: 'Displays the mobile sidebar.',
        toggle: 'Toggle Sidebar'
      }
--  }
 +  },
 +
 +  uninstall: {
 +    dangerZone: 'Danger zone',
-+    checking: 'Checking installation…',
-+    confirmTitle: 'Uninstall Hermes?',
-+    confirmBody: consequence => `This will uninstall Hermes Desktop and ${consequence}. This cannot be undone.`,
-+    uninstalling: 'Uninstalling…',
++    checking: "Checking what's installed\u2026",
++    confirmTitle: 'Confirm uninstall',
++    confirmBody: consequence => `This removes ${consequence}. This can't be undone.`,
++    uninstalling: 'Uninstalling\u2026',
 +    yesUninstall: 'Yes, uninstall',
-+    couldNotStart: 'Could not start uninstaller. Try running Hermes from a terminal.',
++    couldNotStart: 'Uninstall could not start.',
 +    cancel: 'Cancel',
 +    uninstallHermes: 'Uninstall Hermes',
-+    uninstallDescription: 'Remove Hermes Desktop and all its data from this computer.',
++    uninstallDescription: 'Choose how much to remove. The app closes to finish the job; reopen the installer any time to come back.',
 +    options: {
-+      gui: { title: 'GUI only', description: 'Remove the app but keep config and data.', consequence: 'remove only the application files' },
-+      lite: { title: 'Lite', description: 'Remove the app and config, but keep chat history and skills.', consequence: 'remove the application and configuration files' },
-+      full: { title: 'Full', description: 'Remove everything — app, config, data, and chat history.', consequence: 'permanently delete all application files, configuration, and chat history' },
-+    },
-+  },
++      gui: {
++        title: 'Uninstall Chat GUI only',
++        description: 'Remove this desktop app. The Hermes agent, your config, and chats all stay.',
++        consequence: 'the desktop Chat GUI (this app and its data)'
++      },
++      lite: {
++        title: 'Uninstall GUI + agent, keep my data',
++        description: 'Remove the app and the Hermes agent, but keep config, chats, and secrets for a future reinstall.',
++        consequence: 'the Chat GUI and the Hermes agent (config, chats, and secrets are kept)'
++      },
++      full: {
++        title: 'Uninstall everything',
++        description: 'Remove the app, the agent, and all user data \u2014 config, chats, scheduled jobs, secrets, logs.',
++        consequence: 'EVERYTHING \u2014 the Chat GUI, the Hermes agent, and all of your config, chats, secrets, and logs'
++      }
++    }
+   }
+ }
+diff --git a/apps/desktop/src/i18n/types.ts b/apps/desktop/src/i18n/types.ts
+index 53f40cf60..5249e6166 100644
+--- a/apps/desktop/src/i18n/types.ts
++++ b/apps/desktop/src/i18n/types.ts
+@@ -5,7 +5,7 @@
+ // partial locales should use `defineLocale()` so missing desktop-only strings
+ // fall back to English while new keys remain type-checked.
+ 
+-export type Locale = 'en' | 'zh' | 'zh-hant' | 'ja'
++export type Locale = 'en' | 'fr' | 'zh' | 'zh-hant' | 'ja'
+ 
+ export type ToolTitleKey =
+   | 'browser_click'
+@@ -664,6 +664,7 @@ export interface Translations {
+       defaultsFailed: string
+       auxiliaryTitle: string
+       resetAllToMain: string
++      staleAuxWarning: (count: number, names: string, provider: string) => string
+       auxiliaryDesc: string
+       setToMain: string
+       change: string
+@@ -2289,4 +2290,22 @@ export interface Translations {
+       toggle: string
+     }
+   }
 +
-+  billing: {
-+    title: 'Billing',
-+    plan: 'Plan',
-+    payment: 'Payment',
-+    oneTimeTopup: 'One-time top-up',
-+    automaticRefill: 'Automatic refill',
-+    buy: 'Buy',
-+    retry: 'Retry',
-+    openPortal: 'Open portal',
-+    refresh: 'Refresh',
-+    updated: ago => `Updated ${ago}`,
-+    processing: 'Processing… checking settlement',
-+    added: amount => `${amount} added. Balance is refreshing.`,
-+    customAmount: 'Custom credit amount',
-+    fixture: 'Billing fixture',
-+  },
-+
++  uninstall: {
++    dangerZone: string
++    checking: string
++    confirmTitle: string
++    confirmBody: (consequence: string) => string
++    uninstalling: string
++    yesUninstall: string
++    couldNotStart: string
++    cancel: string
++    uninstallHermes: string
++    uninstallDescription: string
++    options: {
++      gui: { title: string; description: string; consequence: string }
++      lite: { title: string; description: string; consequence: string }
++      full: { title: string; description: string; consequence: string }
++    }
++  }
  }
 diff --git a/apps/desktop/src/i18n/zh.ts b/apps/desktop/src/i18n/zh.ts
-index 62cf345..9aa30a3 100644
+index 9785d5bdb..d0c6a49ee 100644
 --- a/apps/desktop/src/i18n/zh.ts
 +++ b/apps/desktop/src/i18n/zh.ts
-@@ -69,7 +69,9 @@ export const zh: Translations = {
-       loadingSettings: '正在加载 Hermes 设置',
-       loadingSessions: '正在加载最近会话',
-       startingDesktopConnection: '正在启动桌面连接',
--      startingHermesDesktop: '正在启动 Hermes 桌面版…'
-+      startingHermesDesktop: '正在启动 Hermes 桌面版…',
-+      connectingPrefix: 'CONN',
-+      connectingTail: 'ECTING',
-     },
-     errors: {
-       backgroundExited: 'Hermes 后台进程已退出。',
-@@ -429,6 +431,7 @@ export const zh: Translations = {
-       installed: name => `已安装「${name}」。`,
-       removeTheme: '移除主题',
-       importedBadge: '已导入',
-+      themeSearchPlaceholder: '搜索您的主题或 VS Code 市场…',
-       pet: {
-         title: '宠物',
-         intro:
-@@ -2868,5 +2871,41 @@ export const zh: Translations = {
+@@ -969,7 +969,8 @@ export const zh: Translations = {
+       defaultsFailed: '保存模型默认值失败',
+       auxiliaryTitle: '辅助模型',
+       resetAllToMain: '全部重置为主模型',
+-      auxiliaryDesc: '辅助任务默认使用主模型。你可以为任意任务指定专用模型。',
++      staleAuxWarning: (count, names, provider) => `${count} 个辅助任务 (${names}) 正在使用 ${provider}，而非您的主模型。`,
++      auxiliaryDesc: '默认情况下，辅助任务使用主模型。分配专用模型给任务以覆盖。',
+       setToMain: '设为主模型',
+       change: '更改',
+       autoUseMain: '自动 · 使用主模型',
+@@ -2869,5 +2870,35 @@ export const zh: Translations = {
        description: '显示移动端侧边栏。',
        toggle: '切换侧边栏'
      }
--  }
 +  },
 +
 +  uninstall: {
 +    dangerZone: '危险区域',
-+    checking: '正在检查安装…',
-+    confirmTitle: '卸载 Hermes？',
-+    confirmBody: consequence => `这将卸载 Hermes Desktop 并${consequence}。此操作不可撤销。`,
++    checking: '正在检查安装内容…',
++    confirmTitle: '确认卸载',
++    confirmBody: consequence => `这将移除${consequence}。此操作无法撤销。`,
 +    uninstalling: '正在卸载…',
-+    yesUninstall: '确认卸载',
-+    couldNotStart: '无法启动卸载程序。请尝试从终端运行 Hermes。',
++    yesUninstall: '是，卸载',
++    couldNotStart: '无法启动卸载。',
 +    cancel: '取消',
 +    uninstallHermes: '卸载 Hermes',
-+    uninstallDescription: '从此计算机移除 Hermes Desktop 及其所有数据。',
++    uninstallDescription: '选择要移除的内容。应用会关闭以完成操作；随时可以重新打开安装程序。',
 +    options: {
-+      gui: { title: '仅 GUI', description: '移除应用但保留配置和数据。', consequence: '仅移除应用程序文件' },
-+      lite: { title: '精简', description: '移除应用和配置，但保留聊天记录和技能。', consequence: '移除应用程序和配置文件' },
-+      full: { title: '完全', description: '移除所有内容 — 应用、配置、数据和聊天记录。', consequence: '永久删除所有应用程序文件、配置和聊天记录' },
-+    },
-+  },
-+
-+  billing: {
-+    title: '账单',
-+    plan: '套餐',
-+    payment: '支付',
-+    oneTimeTopup: '单次充值',
-+    automaticRefill: '自动续费',
-+    buy: '购买',
-+    retry: '重试',
-+    openPortal: '打开门户',
-+    refresh: '刷新',
-+    updated: ago => `已更新 ${ago}`,
-+    processing: '处理中… 正在确认结算',
-+    added: amount => `已添加 ${amount}。余额刷新中。`,
-+    customAmount: '自定义金额',
-+    fixture: '账单测试数据',
-+  },
-+
++      gui: {
++        title: '仅卸载聊天界面',
++        description: '移除此桌面应用。Hermes 代理、配置和聊天记录都会保留。',
++        consequence: '桌面聊天界面（此应用及其数据）'
++      },
++      lite: {
++        title: '卸载界面 + 代理，保留数据',
++        description: '移除应用和 Hermes 代理，但保留配置、聊天记录和密钥以供将来重新安装。',
++        consequence: '聊天界面和 Hermes 代理（配置、聊天记录和密钥将被保留）'
++      },
++      full: {
++        title: '全部卸载',
++        description: '移除应用、代理和所有用户数据——配置、聊天记录、定时任务、密钥、日志。',
++        consequence: '所有内容——聊天界面、Hermes 代理以及您的所有配置、聊天记录、密钥和日志'
++      }
++    }
+   }
  }
