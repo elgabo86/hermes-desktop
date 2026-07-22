@@ -81,10 +81,10 @@ else
 
 # ── Auto-update check (injected) ──
 if [ -x "$APPDIR/usr/bin/auto-update" ]; then
-    "$APPDIR/usr/bin/auto-update" "$@" &
+    "$APPDIR/usr/bin/auto-update" "$@"
 fi
 HERMES_UPDATE_INJECT
-    echo "  AppRun patché (auto-update background)."
+    echo "  AppRun patché (auto-update)."
 fi
 
 # ── Étape 4: Reconstruire le SquashFS ───────────────────────────
