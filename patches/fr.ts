@@ -2931,6 +2931,24 @@ export const fr: Translations = {
     }
   },
 
+
+  billing: {
+    title: 'Facturation',
+    plan: 'Forfait',
+    payment: 'Paiement',
+    oneTimeTopup: 'Recharge ponctuelle',
+    automaticRefill: 'Rechargement automatique',
+    buy: 'Acheter',
+    retry: 'Réessayer',
+    openPortal: 'Ouvrir le portail',
+    refresh: 'Actualiser',
+    updated: ago => `Mis à jour ${ago}`,
+    processing: 'Traitement en cours… vérification du règlement',
+    added: amount => `${amount} ajouté. Le solde s'actualise.`,
+    customAmount: 'Montant personnalisé',
+    fixture: 'Données de test facturation',
+  },
+
   zones: {
     showHeader: 'Afficher l\'en-tête',
     hideHeader: 'Masquer l\'en-tête',

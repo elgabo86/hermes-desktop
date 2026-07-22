@@ -11,6 +11,175 @@ index 32deb34..13d4fa9 100644
                      spellCheck={false}
                      value={query}
                    />
+diff --git a/apps/desktop/src/app/settings/billing/index.tsx b/apps/desktop/src/app/settings/billing/index.tsx
+index 2d234d7..fd19068 100644
+--- a/apps/desktop/src/app/settings/billing/index.tsx
++++ b/apps/desktop/src/app/settings/billing/index.tsx
+@@ -1,6 +1,8 @@
+ import { useQueryClient } from '@tanstack/react-query'
+ import { useEffect, useMemo, useState } from 'react'
+ 
++import { useI18n } from '@/i18n'
++
+ import { Button } from '@/components/ui/button'
+ import { Input } from '@/components/ui/input'
+ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+@@ -113,6 +115,8 @@ function AccountRow({ billing, row }: { billing?: BillingStateResponse; row: Bil
+ }
+ 
+ function BuyCreditsRow({ billing, row }: { billing: BillingStateResponse; row: BillingAccountRowView }) {
++  const { t } = useI18n()
++  const b = t.billing
+   const presets = useMemo(
+     () =>
+       billing.charge_presets.map((amount, index) => ({
+@@ -157,7 +161,7 @@ function BuyCreditsRow({ billing, row }: { billing: BillingStateResponse; row: B
+             </Button>
+           ))}
+           <Input
+-            aria-label="Custom credit amount"
++            aria-label={b.customAmount}
+             className="w-24 py-[3px]"
+             disabled={controlsDisabled}
+             inputMode="decimal"
+@@ -214,12 +218,14 @@ function BuyCreditsOutcome({
+   onRetry: () => void
+   outcome: ReturnType<typeof useChargeFlow>['outcome']
+ }) {
++  const { t } = useI18n()
++  const b = t.billing
+   const stepUp = useStepUpFlow()
+ 
+   if (busy) {
+     return (
+       <div className="mt-2 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
+-        Processing… checking settlement
++        {b.processing}
+       </div>
+     )
+   }
+@@ -231,7 +237,7 @@ function BuyCreditsOutcome({
+   if (outcome.kind === 'success') {
+     return (
+       <div className="mt-2 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
+-        {formatMoney(outcome.amountUsd ?? amount)} added. Balance is refreshing.
++        b.added(formatMoney(outcome.amountUsd ?? amount))
+       </div>
+     )
+   }
+@@ -244,7 +250,7 @@ function BuyCreditsOutcome({
+         </span>
+         {outcome.portalUrl && (
+           <Button onClick={() => onPortal(outcome.portalUrl)} size="sm" type="button" variant="outline">
+-            Open portal
++            {b.openPortal}
+             <ExternalLink className="size-3.5" />
+           </Button>
+         )}
+@@ -267,7 +273,7 @@ function BuyCreditsOutcome({
+       {outcome.action?.type === 'step_up' && <StepUpInlineAction flow={stepUp} />}
+       {portalUrl && (
+         <Button onClick={() => onPortal(portalUrl)} size="sm" type="button" variant="outline">
+-          Open portal
++          {b.openPortal}
+           <ExternalLink className="size-3.5" />
+         </Button>
+       )}
+@@ -362,6 +368,8 @@ function UsageRefreshRow({
+   onRefresh: () => void
+   updatedAt: number
+ }) {
++  const { t } = useI18n()
++  const b = t.billing
+   const [now, setNow] = useState(() => Date.now())
+ 
+   useEffect(() => {
+@@ -380,10 +388,10 @@ function UsageRefreshRow({
+ 
+   return (
+     <div className="flex min-w-0 items-center justify-end gap-1.5 pt-1 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
+-      <span>Updated {formatUsageUpdatedAgo(updatedAt, now)}</span>
+-      <Tip label="Refresh">
++      <span>b.updated(formatUsageUpdatedAgo(updatedAt, now))</span>
++      <Tip label={b.refresh}>
+         <Button
+-          aria-label="Refresh"
++          aria-label={b.refresh}
+           className="size-7 p-0 text-(--ui-text-tertiary)"
+           disabled={isFetching}
+           onClick={onRefresh}
+@@ -405,10 +413,12 @@ function BillingFixtureSelect({
+   onValueChange: (value: BillingFixtureSelection) => void
+   value: BillingFixtureSelection
+ }) {
++  const { t: _t } = useI18n()
++  const _b = _t.billing
+   return (
+     <Select onValueChange={value => onValueChange(value as BillingFixtureSelection)} value={value}>
+       <SelectTrigger
+-        aria-label="Billing fixture"
++        aria-label={_b.fixture}
+         className="h-7 w-32 border-transparent bg-transparent px-1.5 text-xs font-normal text-(--ui-text-tertiary) shadow-none hover:bg-muted/40 focus-visible:ring-0 focus-visible:ring-offset-0 data-[state=open]:bg-muted/40"
+         size="sm"
+       >
+@@ -433,11 +443,13 @@ function BillingHeader({
+   fixtureName?: BillingFixtureSelection
+   onFixtureChange?: (value: BillingFixtureSelection) => void
+ }) {
++  const { t } = useI18n()
++  const b = t.billing
+   return (
+     <div className="mb-2.5 flex items-center justify-between gap-3 pt-2 text-[length:var(--conversation-text-font-size)] font-medium">
+       <div className="flex min-w-0 items-center gap-2">
+         <BarChart3 className="size-4 shrink-0 text-muted-foreground" />
+-        <span>Billing</span>
++        <span>{b.title}</span>
+       </div>
+       {import.meta.env.DEV && fixtureName && onFixtureChange ? (
+         <BillingFixtureSelect onValueChange={onFixtureChange} value={fixtureName} />
+@@ -453,6 +465,9 @@ function BillingSettingsContent({
+   fixtureName?: BillingFixtureSelection
+   onFixtureChange?: (value: BillingFixtureSelection) => void
+ }) {
++  const { t } = useI18n()
++  const b = t.billing
++
+   const [subView, setSubView] = useRouteEnumParam<BillingSubView>('bview', BILLING_VIEWS, 'overview')
+ 
+   // Fixture mode flows through the SAME query path — the simulated api (supplied by
+@@ -503,28 +518,28 @@ function BillingSettingsContent({
+ 
+       {view.plan && (
+         <div className="mb-5">
+-          <SectionHeading icon={Package} title="Plan" />
++          <SectionHeading icon={Package} title={b.plan} />
+           <CurrentPlanCard onViewPlans={() => setSubView('plans')} plan={view.plan} />
+         </div>
+       )}
+ 
+       {paymentRow && (
+         <div className="mb-5">
+-          <SectionHeading icon={Lock} title="Payment" />
++          <SectionHeading icon={Lock} title={b.payment} />
+           <AccountRow billing={billing} row={paymentRow} />
+         </div>
+       )}
+ 
+       {topupRow && (
+         <div className="mb-5">
+-          <SectionHeading icon={Plus} title="One-time top-up" />
++          <SectionHeading icon={Plus} title={b.oneTimeTopup} />
+           <AccountRow billing={billing} row={topupRow} />
+         </div>
+       )}
+ 
+       {refillRow && (
+         <div className="mb-5">
+-          <SectionHeading icon={RefreshCw} title="Automatic refill" />
++          <SectionHeading icon={RefreshCw} title={b.automaticRefill} />
+           <AccountRow billing={billing} row={refillRow} />
+         </div>
+       )}
 diff --git a/apps/desktop/src/app/settings/uninstall-section.tsx b/apps/desktop/src/app/settings/uninstall-section.tsx
 index 5ac21ac..0103d3b 100644
 --- a/apps/desktop/src/app/settings/uninstall-section.tsx
@@ -684,7 +853,7 @@ index 96daf9b..d941695 100644
  
  export function localeConfigValue(locale: Locale): string {
 diff --git a/apps/desktop/src/i18n/types.ts b/apps/desktop/src/i18n/types.ts
-index d0ead27..225361b 100644
+index d0ead27..69d41fa 100644
 --- a/apps/desktop/src/i18n/types.ts
 +++ b/apps/desktop/src/i18n/types.ts
 @@ -5,7 +5,7 @@
@@ -713,7 +882,7 @@ index d0ead27..225361b 100644
        pet: {
          title: string
          intro: string
-@@ -2288,4 +2291,22 @@ export interface Translations {
+@@ -2288,4 +2291,40 @@ export interface Translations {
        toggle: string
      }
    }
@@ -735,4 +904,22 @@ index d0ead27..225361b 100644
 +      full: { title: string; description: string; consequence: string }
 +    }
 +  }
++
++  billing: {
++    title: string
++    plan: string
++    payment: string
++    oneTimeTopup: string
++    automaticRefill: string
++    buy: string
++    retry: string
++    openPortal: string
++    refresh: string
++    updated: (ago: string) => string
++    processing: string
++    added: (amount: string) => string
++    customAmount: string
++    fixture: string
++  }
++
  }

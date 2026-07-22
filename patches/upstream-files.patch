@@ -1,5 +1,5 @@
 diff --git a/apps/desktop/src/i18n/en.ts b/apps/desktop/src/i18n/en.ts
-index 532a52a..e2f86e9 100644
+index 532a52a..086b102 100644
 --- a/apps/desktop/src/i18n/en.ts
 +++ b/apps/desktop/src/i18n/en.ts
 @@ -69,7 +69,9 @@ export const en: Translations = {
@@ -21,10 +21,11 @@ index 532a52a..e2f86e9 100644
        pet: {
          title: 'Pet',
          intro:
-@@ -2710,5 +2713,23 @@ export const en: Translations = {
+@@ -2710,5 +2713,41 @@ export const en: Translations = {
        description: 'Displays the mobile sidebar.',
        toggle: 'Toggle Sidebar'
      }
+-  }
 +  },
 +
 +  uninstall: {
@@ -43,10 +44,28 @@ index 532a52a..e2f86e9 100644
 +      lite: { title: 'Lite', description: 'Remove the app and config, but keep chat history and skills.', consequence: 'remove the application and configuration files' },
 +      full: { title: 'Full', description: 'Remove everything — app, config, data, and chat history.', consequence: 'permanently delete all application files, configuration, and chat history' },
 +    },
-   }
++  },
++
++  billing: {
++    title: 'Billing',
++    plan: 'Plan',
++    payment: 'Payment',
++    oneTimeTopup: 'One-time top-up',
++    automaticRefill: 'Automatic refill',
++    buy: 'Buy',
++    retry: 'Retry',
++    openPortal: 'Open portal',
++    refresh: 'Refresh',
++    updated: ago => `Updated ${ago}`,
++    processing: 'Processing… checking settlement',
++    added: amount => `${amount} added. Balance is refreshing.`,
++    customAmount: 'Custom credit amount',
++    fixture: 'Billing fixture',
++  },
++
  }
 diff --git a/apps/desktop/src/i18n/zh.ts b/apps/desktop/src/i18n/zh.ts
-index 62cf345..8ad02c7 100644
+index 62cf345..9aa30a3 100644
 --- a/apps/desktop/src/i18n/zh.ts
 +++ b/apps/desktop/src/i18n/zh.ts
 @@ -69,7 +69,9 @@ export const zh: Translations = {
@@ -68,10 +87,11 @@ index 62cf345..8ad02c7 100644
        pet: {
          title: '宠物',
          intro:
-@@ -2868,5 +2871,23 @@ export const zh: Translations = {
+@@ -2868,5 +2871,41 @@ export const zh: Translations = {
        description: '显示移动端侧边栏。',
        toggle: '切换侧边栏'
      }
+-  }
 +  },
 +
 +  uninstall: {
@@ -90,5 +110,23 @@ index 62cf345..8ad02c7 100644
 +      lite: { title: '精简', description: '移除应用和配置，但保留聊天记录和技能。', consequence: '移除应用程序和配置文件' },
 +      full: { title: '完全', description: '移除所有内容 — 应用、配置、数据和聊天记录。', consequence: '永久删除所有应用程序文件、配置和聊天记录' },
 +    },
-   }
++  },
++
++  billing: {
++    title: '账单',
++    plan: '套餐',
++    payment: '支付',
++    oneTimeTopup: '单次充值',
++    automaticRefill: '自动续费',
++    buy: '购买',
++    retry: '重试',
++    openPortal: '打开门户',
++    refresh: '刷新',
++    updated: ago => `已更新 ${ago}`,
++    processing: '处理中… 正在确认结算',
++    added: amount => `已添加 ${amount}。余额刷新中。`,
++    customAmount: '自定义金额',
++    fixture: '账单测试数据',
++  },
++
  }
