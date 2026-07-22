@@ -1,50 +1,45 @@
 #!/usr/bin/env bash
 # auto-update.sh — Vérifie si une nouvelle AppImage est disponible et la télécharge
-# Appelé en background par l'AppRun au démarrage.
+# Appelé par l'AppRun au démarrage (synchrone).
+# Utilise raw.githubusercontent.com (pas d'API, pas de rate limit).
 set -e
 
-# Pas une AppImage → rien à faire
 if [ -z "${APPIMAGE:-}" ] || [ "$APPIMAGE" = "$APPDIR/AppRun" ]; then
     exit 0
 fi
 
-REPO="elgabo86/hermes-desktop"
-CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/hermes-desktop-update"
+VERSION_URL="https://raw.githubusercontent.com/elgabo86/hermes-desktop/main/VERSION"
+RELEASE_URL="https://github.com/elgabo86/hermes-desktop/releases/latest/download"
+CACHE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/hermes-desktop-version"
 
-# Récupérer la date de la dernière release via l'API GitHub
-REMOTE_DATE=$(curl -fsS --connect-timeout 10 -H "Accept: application/vnd.github+json" \
-  "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
-  grep -o '"published_at": "[^"]*"' | cut -d'"' -f4)
+# Récupérer le timestamp de la version distante
+REMOTE_VERSION=$(curl -fsS --connect-timeout 10 "$VERSION_URL" 2>/dev/null | head -1 | tr -d '[:space:]')
 
-if [ -z "$REMOTE_DATE" ]; then
+if [ -z "$REMOTE_VERSION" ]; then
     exit 0  # Pas de réseau
 fi
 
-# Comparer avec la date stockée dans le cache
-if [ -f "$CACHE_FILE" ]; then
-    CACHED_DATE=$(cat "$CACHE_FILE")
-    if [ "$REMOTE_DATE" = "$CACHED_DATE" ]; then
-        exit 0  # Déjà à jour
-    fi
+# Comparer avec le cache local
+if [ -f "$CACHE_FILE" ] && [ "$(cat "$CACHE_FILE")" = "$REMOTE_VERSION" ]; then
+    exit 0  # Déjà à jour
 fi
 
-# Nouvelle version disponible : télécharger
-echo "[auto-update] Nouvelle version disponible, téléchargement..."
-TEMP=$(mktemp "/tmp/hermes-desktop-XXXXXX.AppImage")
+# Trouver le nom exact du fichier via la page de release (sans API)
+DL_PAGE=$(curl -fsS --connect-timeout 10 "https://github.com/elgabo86/hermes-desktop/releases/latest" 2>/dev/null)
+APPIMAGE_NAME=$(echo "$DL_PAGE" | grep -o 'hermes-desktop-[0-9.]*-[0-9]*T[0-9]*Z-x86_64\.AppImage' | head -1)
 
-DL_URL=$(curl -fsS "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | \
-  grep -o '"browser_download_url": "[^"]*x86_64\.AppImage"' | head -1 | cut -d'"' -f4)
-
-if [ -z "$DL_URL" ]; then
-    rm -f "$TEMP"
+if [ -z "$APPIMAGE_NAME" ]; then
     exit 0
 fi
 
-if curl -fSL --connect-timeout 30 --max-time 600 -o "$TEMP" "$DL_URL" 2>/dev/null; then
+echo "[auto-update] Nouvelle version disponible ($REMOTE_VERSION), téléchargement..."
+TEMP=$(mktemp "/tmp/hermes-desktop-XXXXXX.AppImage")
+
+if curl -fSL --connect-timeout 30 --max-time 600 -o "$TEMP" "${RELEASE_URL}/${APPIMAGE_NAME}" 2>/dev/null; then
     chmod +x "$TEMP"
     mv "$TEMP" "$APPIMAGE"
     mkdir -p "$(dirname "$CACHE_FILE")"
-    echo "$REMOTE_DATE" > "$CACHE_FILE"
+    echo "$REMOTE_VERSION" > "$CACHE_FILE"
     echo "[auto-update] Mise à jour terminée. Redémarrez Hermes Desktop."
 else
     rm -f "$TEMP"
