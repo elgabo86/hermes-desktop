@@ -24,9 +24,8 @@ if [ -f "$CACHE_FILE" ] && [ "$(cat "$CACHE_FILE")" = "$REMOTE_VERSION" ]; then
     exit 0  # Déjà à jour
 fi
 
-# Trouver le nom exact du fichier via la page de release (sans API)
-DL_PAGE=$(curl -fsSL --connect-timeout 10 "https://github.com/elgabo86/hermes-desktop/releases/latest" 2>/dev/null)
-APPIMAGE_NAME=$(echo "$DL_PAGE" | grep -o 'hermes-desktop-[0-9.]*-[0-9]*T[0-9]*Z-x86_64\.AppImage' | head -1)
+# Trouver le nom exact du fichier via LATEST (asset de la release)
+APPIMAGE_NAME=$(curl -fsSL --connect-timeout 10 "${RELEASE_URL}/LATEST" 2>/dev/null | head -1 | tr -d '[:space:]')
 
 if [ -z "$APPIMAGE_NAME" ]; then
     exit 0

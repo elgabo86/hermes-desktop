@@ -42,6 +42,7 @@ jobs:
       - name: Update VERSION file
         run: |
           date -u +%Y%m%dT%H%M%SZ > dist/VERSION
+          ls dist/hermes-desktop-*.AppImage | head -1 | xargs basename > dist/LATEST
 
       - name: Delete existing latest release (if any)
         run: |
@@ -58,4 +59,5 @@ jobs:
             dist/hermes-desktop-*.AppImage
             dist/hermes-desktop-*.AppImage.zsync
             dist/VERSION
+            dist/LATEST
           fail_on_unmatched_files: true
