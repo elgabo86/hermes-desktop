@@ -23,9 +23,9 @@ Pas de sudo nécessaire.
 
 ## Auto-update
 
-Au lancement, l'AppImage télécharge `VERSION` depuis la release et compare
-avec un cache local. Si différent, elle télécharge la nouvelle AppImage avant
-de démarrer.
+Au lancement, l'AppImage compare le timestamp embarqué dans son nom de fichier
+avec le `VERSION` distant. Si le distant est plus récent, elle télécharge la
+nouvelle AppImage avant de démarrer. Aucun fichier cache externe.
 
 ## Build
 
