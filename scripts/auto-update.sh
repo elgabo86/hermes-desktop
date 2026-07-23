@@ -20,8 +20,15 @@ if [ -z "$REMOTE_VERSION" ]; then
 fi
 
 # Comparer avec le cache local
-if [ -f "$CACHE_FILE" ] && [ "$(cat "$CACHE_FILE")" = "$REMOTE_VERSION" ]; then
-    exit 0  # Déjà à jour
+if [ -f "$CACHE_FILE" ]; then
+    if [ "$(cat "$CACHE_FILE")" = "$REMOTE_VERSION" ]; then
+        exit 0  # Déjà à jour
+    fi
+else
+    # Premier lancement : initialiser le cache sans télécharger
+    mkdir -p "$(dirname "$CACHE_FILE")"
+    echo "$REMOTE_VERSION" > "$CACHE_FILE"
+    exit 0
 fi
 
 # Trouver le nom exact du fichier via LATEST (asset de la release)
