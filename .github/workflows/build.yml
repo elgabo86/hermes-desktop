@@ -23,6 +23,17 @@ jobs:
         with:
           node-version: '22'
 
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+
+      - name: Build zsync (Go, statique)
+        run: |
+          git clone --depth=1 https://github.com/cph6/zsync.git /tmp/zsync-src
+          cd /tmp/zsync-src/cmd/zsync
+          CGO_ENABLED=0 go build -ldflags="-s -w" -o "$GITHUB_WORKSPACE/scripts/zsync" .
+          chmod +x "$GITHUB_WORKSPACE/scripts/zsync"
+
       - name: Build AppImage
         run: |
           chmod +x build-appimage.sh
@@ -41,7 +52,7 @@ jobs:
 
       - name: Update VERSION file
         run: |
-          date -u +%Y%m%dT%H%M%SZ > dist/VERSION
+          cp dist/build-version dist/VERSION
           ls dist/hermes-desktop-*.AppImage | head -1 | xargs basename > dist/LATEST
 
       - name: Delete existing latest release (if any)

@@ -43,12 +43,29 @@ cd "$WORK_DIR"
 ./original.AppImage --appimage-extract > /dev/null
 echo "  Extraction OK."
 
-# ── Étape 2: Injecter le script auto-update ─────────────────────
-echo ">>> Injection du script auto-update..."
-mkdir -p squashfs-root/usr/bin
+# ── Étape 2: Injecter le script auto-update, zsync et build-version ─────
+echo ">>> Injection des scripts..."
+mkdir -p squashfs-root/usr/bin squashfs-root/usr/share/hermes
+
 cp "$SCRIPT_DIR/scripts/auto-update.sh" squashfs-root/usr/bin/auto-update
 chmod +x squashfs-root/usr/bin/auto-update
-echo "  Script embarqué."
+echo "  auto-update embarqué."
+
+if [ -x "$SCRIPT_DIR/scripts/zsync" ]; then
+    cp "$SCRIPT_DIR/scripts/zsync" squashfs-root/usr/bin/zsync
+    chmod +x squashfs-root/usr/bin/zsync
+    echo "  zsync embarqué."
+else
+    echo "  ATTENTION: scripts/zsync absent, pas de delta update."
+fi
+
+BUILD_VERSION_FILE="$SCRIPT_DIR/dist/build-version"
+if [ -f "$BUILD_VERSION_FILE" ]; then
+    cp "$BUILD_VERSION_FILE" squashfs-root/usr/share/hermes/build-version
+    echo "  build-version embarqué."
+else
+    echo "  ATTENTION: dist/build-version absent."
+fi
 
 # ── Étape 3: Patcher l'AppRun ───────────────────────────────────
 echo ">>> Patch de l'AppRun..."

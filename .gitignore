@@ -1,3 +1,4 @@
 dist/
 *.AppImage
 squashfs-root/
+scripts/zsync

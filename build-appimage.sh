@@ -47,6 +47,7 @@ echo "=== Build done: $OUTPUT_DIR/$(basename "$APPIMAGE") ==="
 # Renommer en hermes-desktop avec timestamp (pour que l'auto-update détecte les changements)
 VERSION=$(echo "$(basename "$APPIMAGE")" | sed -n 's/^Hermes-\([0-9.]*\)-linux.*/\1/p')
 BUILD_TS=$(date -u +%Y%m%dT%H%M%SZ)
+echo "$BUILD_TS" > "$OUTPUT_DIR/build-version"
 NEWNAME="hermes-desktop-${VERSION}-${BUILD_TS}-x86_64.AppImage"
 mv "$OUTPUT_DIR/$(basename "$APPIMAGE")" "$OUTPUT_DIR/$NEWNAME"
 echo ">>> Renommé: $OUTPUT_DIR/$NEWNAME"
