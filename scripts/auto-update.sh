@@ -3,6 +3,7 @@
 # Appelé par l'AppRun au démarrage (synchrone).
 # Lit la version locale depuis build-version embarqué (indépendant du nom de fichier).
 # Utilise zsync embarqué pour le delta, fallback curl pour le téléchargement complet.
+# Affiche une fenêtre splash Electron pendant l'opération.
 # Après mise à jour, crée un marker pour que l'AppRun relance la nouvelle AppImage.
 set -e
 
@@ -47,6 +48,55 @@ if [ -z "$APPIMAGE_NAME" ]; then
     exit 0
 fi
 
+# ── Démarrer la fenêtre splash Electron (si disponible) ──────────────
+SPLASH_PID=""
+SPLASH_FIFO="/tmp/hermes-splash-$$"
+
+_send_splash() {
+    [ -z "$SPLASH_PID" ] || [ ! -p "$SPLASH_FIFO" ] && return 0
+    echo "$1" > "$SPLASH_FIFO" 2>/dev/null || true
+}
+
+_start_splash() {
+    local splash_bin="$APPDIR/usr/share/hermes/splash/splash"
+
+    # Le binaire splash (hardlink Electron avec son propre resources/app.asar) doit exister
+    if [ ! -x "$splash_bin" ]; then
+        return 0
+    fi
+
+    # Créer le FIFO avant de lancer la splash
+    rm -f "$SPLASH_FIFO"
+    mkfifo "$SPLASH_FIFO" 2>/dev/null || return 0
+
+    # Lancer la splash en arrière-plan (non bloquant)
+    # Le binaire Electron (hardlink) charge son propre resources/app.asar splash.
+    # --no-sandbox car on est dans un AppImage sans user namespaces garantis
+    "$splash_bin" --no-sandbox "$SPLASH_FIFO" >/dev/null 2>&1 &
+    SPLASH_PID=$!
+
+    # Ouvrir le FIFO en lecture-écriture (non bloquant) pour garder la splash en vie
+    exec 3<>"$SPLASH_FIFO" 2>/dev/null || true
+}
+
+_close_splash() {
+    if [ -n "$SPLASH_PID" ]; then
+        # Fermer le fd du FIFO → la splash détecte la fin et se ferme
+        exec 3>&- 2>/dev/null || true
+        # Attendre un peu que la splash se ferme proprement
+        sleep 0.3
+        kill "$SPLASH_PID" 2>/dev/null || true
+        rm -f "$SPLASH_FIFO"
+        SPLASH_PID=""
+    fi
+}
+
+# Trap pour toujours fermer la splash en sortie
+trap _close_splash EXIT
+
+_start_splash
+_send_splash '{"status":"Vérification des mises à jour…"}'
+
 echo "[auto-update] Nouvelle version disponible ($REMOTE_VERSION)..."
 
 TEMP=$(mktemp "/tmp/hermes-desktop-XXXXXX.AppImage")
@@ -56,6 +106,7 @@ UPDATED=0
 ZSYNC="$APPDIR/usr/bin/zsync"
 if [ -x "$ZSYNC" ]; then
     ZSYNC_URL="${RELEASE_URL}/${APPIMAGE_NAME}.zsync"
+    _send_splash '{"status":"Téléchargement de la mise à jour…","details":"delta via zsync"}'
     echo "[auto-update] Téléchargement delta via zsync..."
     if "$ZSYNC" -i "$APPIMAGE" -o "$TEMP" "$ZSYNC_URL" 2>/dev/null; then
         chmod +x "$TEMP"
@@ -69,6 +120,7 @@ fi
 
 # ── Fallback: téléchargement complet via curl ──
 if [ "$UPDATED" = "0" ]; then
+    _send_splash '{"status":"Téléchargement de la mise à jour…","details":"téléchargement complet"}'
     echo "[auto-update] Téléchargement complet..."
     if curl -fSL --connect-timeout 30 --max-time 600 -o "$TEMP" "${RELEASE_URL}/${APPIMAGE_NAME}" 2>/dev/null; then
         chmod +x "$TEMP"
@@ -83,9 +135,13 @@ fi
 
 # ── Signaler la mise à jour à l'AppRun pour relance automatique ──
 if [ "$UPDATED" = "1" ]; then
+    _send_splash '{"status":"Redémarrage…","details":"Relance de la nouvelle version"}'
     mkdir -p "$(dirname "$CACHE_FILE")"
     echo "$REMOTE_VERSION" > "$CACHE_FILE"
     # Marker avec PID pour éviter les collisions entre instances
     touch /tmp/hermes-desktop-updated-$$
+    _close_splash
     exit 0
 fi
+
+_close_splash

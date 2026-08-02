@@ -51,6 +51,41 @@ cp "$SCRIPT_DIR/scripts/auto-update.sh" squashfs-root/usr/bin/auto-update
 chmod +x squashfs-root/usr/bin/auto-update
 echo "  auto-update embarqué."
 
+# Splash Electron (fenêtre de progression pendant l'auto-update)
+# On crée un dossier splash/ avec un hardlink du binaire Electron + un mini app.asar.
+# Electron résout resources/app.asar relativement à /proc/self/exe → notre asar splash.
+SPLASH_BUILD="$WORK_DIR/splash-app"
+rm -rf "$SPLASH_BUILD"
+mkdir -p "$SPLASH_BUILD"
+cp "$SCRIPT_DIR/splash/package.json" "$SPLASH_BUILD/"
+cp "$SCRIPT_DIR/splash/splash.js" "$SPLASH_BUILD/"
+cp "$SCRIPT_DIR/splash/splash.html" "$SPLASH_BUILD/"
+
+# Construire l'asar splash avec @electron/asar (déjà dans node_modules du build)
+if command -v npx >/dev/null 2>&1; then
+    npx --yes @electron/asar pack "$SPLASH_BUILD" "$WORK_DIR/splash.asar" 2>/dev/null || {
+        echo "  ATTENTION: asar splash non construit (npx/asar manquant)."
+    }
+else
+    echo "  ATTENTION: npx absent, pas d'asar splash."
+fi
+
+if [ -f "$WORK_DIR/splash.asar" ]; then
+    SPLASH_DIR="squashfs-root/usr/share/hermes/splash"
+    mkdir -p "$SPLASH_DIR/resources"
+    # Hardlink du binaire Electron (même inode, zéro duplication)
+    ln squashfs-root/Hermes "$SPLASH_DIR/splash"
+    # Mini asar splash
+    cp "$WORK_DIR/splash.asar" "$SPLASH_DIR/resources/app.asar"
+    # Symlinks vers les libs Electron du parent (le binaire les cherche à côté de lui)
+    for f in chrome_100_percent.pak chrome_200_percent.pak chrome-sandbox chrome_crashpad_handler icudtl.dat libEGL.so libffmpeg.so libGLESv2.so libvk_swiftshader.so libvulkan.so.1 resources.pak snapshot_blob.bin v8_context_snapshot.bin vk_swiftshader_icd.json locales; do
+        [ -e "squashfs-root/$f" ] && ln -sf "../../../../$f" "$SPLASH_DIR/$f"
+    done
+    echo "  splash Electron embarqué (hardlink binaire + mini asar)."
+else
+    echo "  Splash non embarquée (asar manquant)."
+fi
+
 if [ -x "$SCRIPT_DIR/scripts/zsync" ]; then
     cp "$SCRIPT_DIR/scripts/zsync" squashfs-root/usr/bin/zsync
     chmod +x squashfs-root/usr/bin/zsync

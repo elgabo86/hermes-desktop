@@ -1,0 +1,6 @@
+{
+  "name": "hermes-splash",
+  "version": "1.0.0",
+  "main": "splash.js",
+  "private": true
+}

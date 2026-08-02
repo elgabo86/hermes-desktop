@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-family: -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 24px;
+    user-select: none;
+    overflow: hidden;
+  }
+  .logo {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #7c9eff;
+  }
+  .status {
+    font-size: 15px;
+    color: #a0a0b0;
+    text-align: center;
+    min-height: 20px;
+  }
+  .progress-bar {
+    width: 280px;
+    height: 4px;
+    background: #2a2a4a;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #7c9eff, #a0c4ff);
+    border-radius: 2px;
+    width: 0%;
+    transition: width 0.3s ease;
+  }
+  .spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #2a2a4a;
+    border-top-color: #7c9eff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .details {
+    font-size: 12px;
+    color: #666680;
+    min-height: 16px;
+  }
+</style>
+</head>
+<body>
+  <div class="logo">Hermes</div>
+  <div class="status" id="status">Vérification des mises à jour…</div>
+  <div class="progress-bar"><div class="progress-fill" id="fill"></div></div>
+  <div class="details" id="details"></div>
+  <script>
+    const { ipcRenderer } = require('electron');
+    const statusEl = document.getElementById('status');
+    const fillEl = document.getElementById('fill');
+    const detailsEl = document.getElementById('details');
+
+    ipcRenderer.on('update-status', (event, msg) => {
+      if (msg.status) statusEl.textContent = msg.status;
+      if (msg.details) detailsEl.textContent = msg.details;
+      if (typeof msg.progress === 'number') fillEl.style.width = msg.progress + '%';
+    });
+  </script>
+</body>
+</html>
