@@ -99,9 +99,20 @@ else
 # ── Auto-update check (injected) ──
 if [ -x "$APPDIR/usr/bin/auto-update" ]; then
     "$APPDIR/usr/bin/auto-update" "$@"
+    # Si l'auto-update a remplacé le fichier sur disque, relancer la nouvelle AppImage
+    # au lieu de continuer avec l'ancienne (encore montée en mémoire).
+    for marker in /tmp/hermes-desktop-updated-*; do
+        if [ -f "$marker" ]; then
+            rm -f "$marker"
+            if [ -n "${APPIMAGE:-}" ] && [ -x "$APPIMAGE" ]; then
+                echo "[auto-update] Relance de la nouvelle AppImage..."
+                exec "$APPIMAGE" "$@"
+            fi
+        fi
+    done
 fi
 HERMES_UPDATE_INJECT
-    echo "  AppRun patché (auto-update)."
+    echo "  AppRun patché (auto-update + relance)."
 fi
 
 # ── Étape 4: Reconstruire le SquashFS ───────────────────────────
