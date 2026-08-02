@@ -4,6 +4,8 @@ AppImage non-officielle de [Hermes Desktop](https://github.com/NousResearch/herm
 
 - 🇫🇷 Interface entièrement en français
 - 🔄 Auto-update automatique au lancement
+- 🪟 Fenêtre splash pendant la mise à jour
+- ⚡ Relance automatique après mise à jour
 
 ## Pourquoi ?
 
@@ -24,8 +26,14 @@ Pas de sudo nécessaire.
 ## Auto-update
 
 Au lancement, l'AppImage compare le timestamp embarqué dans son nom de fichier
-avec le `VERSION` distant. Si le distant est plus récent, elle télécharge la
-nouvelle AppImage avant de démarrer. Aucun fichier cache externe.
+avec le `VERSION` distant. Si le distant est plus récent :
+
+1. Une **fenêtre splash** s'affiche (logo Hermes + statut + progression)
+2. La nouvelle AppImage est téléchargée (delta zsync si possible)
+3. L'ancienne version **se relance automatiquement** avec la nouvelle — pas
+   besoin de fermer/rouvrir manuellement
+
+Aucun fichier cache externe requis.
 
 ## Build
 

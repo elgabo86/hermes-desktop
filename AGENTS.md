@@ -8,7 +8,33 @@ Build d'AppImage Hermes Desktop avec trad française, distribué via elgabo86/he
 - **Plus de patches** — le fork contient directement fr.ts, composants modifiés, types/en/zh/catalog/languages
 - **Script** : `build-appimage.sh` clone le fork i18n → build → AppImage
 - **Une seule source de vérité** : le fork i18n = PR #48070 = AppImage
-- **Auto-update** : extrait le timestamp du nom du fichier AppImage → curl `releases/latest/download/VERSION` → compare → télécharge si différent. Pas de cache externe.
+- **Auto-update** : extrait le timestamp du nom du fichier AppImage → curl `releases/latest/download/VERSION` → compare → télécharge si différent. Splash Electron pendant le téléchargement + relance automatique après update. Pas de cache externe.
+
+## Auto-update et splash
+
+### Mécanisme
+
+1. L'AppRun lance `usr/bin/auto-update` (synchrone) avant de démarrer Hermes
+2. L'auto-update compare `build-version` (embarqué) avec `VERSION` distant
+3. Si différent : splash Electron + téléchargement (zsync delta, fallback curl)
+4. Si update réussi : marker `/tmp/hermes-desktop-updated-$$` créé
+5. L'AppRun détecte le marker et `exec` la nouvelle AppImage au lieu de l'ancienne
+
+### Splash Electron
+
+La splash est un mini-app Electron embarquée dans `usr/share/hermes/splash/` :
+- **Hardlink** du binaire `Hermes` (même inode, zéro duplication)
+- **Mini `resources/app.asar`** (~5 Ko) avec `package.json` + `splash.js` + `splash.html`
+- Electron résout `resources/app.asar` relativement à `/proc/self/exe` → le hardlink charge notre splash
+- **Symlinks** vers les libs Electron du parent (`.so`, `.pak`, `locales/`, etc.)
+- Communication via FIFO : l'auto-update envoie du JSON ligne par ligne, la splash affiche
+
+Fichiers : `splash/package.json`, `splash/splash.js`, `splash/splash.html`
+
+### Construction de l'asar splash
+
+Au post-processing, `npx @electron/asar pack` construit le mini-asar.
+Pas d'outil custom — le format asar est généré par l'outil officiel.
 
 ## Workflow de mise à jour
 
@@ -65,3 +91,6 @@ gh workflow run "Build AppImage" --repo elgabo86/hermes-desktop
 - `npm run build` utilise Vite (pas de type-check) → toujours `npx tsc --noEmit` avant de pusher
 - `elgabo86/hermes-desktop` ne contient QUE le script de build + CI — pas de duplication i18n
 - Les `fieldLabels`/`fieldDescriptions` utilisent des clés préfixées (`desktop.repoScan*`) → respecter le prefixe dans `defineFieldCopy`
+- **Ne pas utiliser `--app-path`** avec le binaire Electron packagé — il cherche toujours `resources/app.asar` relativement à `/proc/self/exe`, pas au flag. La splash utilise un hardlink + resources/ dédié à la place.
+- **Format asar custom** : ne pas réinventer la sérialisation asar (header Pickle Chromium). Utiliser `npx @electron/asar pack` — l'outil officiel.
+- **FIFO splash** : ouvrir en lecture-écriture (`exec 3<>`) sinon `open()` bloque jusqu'à ce qu'un reader se connecte.
