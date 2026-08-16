@@ -53,7 +53,8 @@ SPLASH_PID=""
 SPLASH_FIFO="/tmp/hermes-splash-$$"
 
 _send_splash() {
-    [ -z "$SPLASH_PID" ] || [ ! -p "$SPLASH_FIFO" ] && return 0
+    [ -z "$SPLASH_PID" ] && return 0
+    [ ! -p "$SPLASH_FIFO" ] && return 0
     echo "$1" > "$SPLASH_FIFO" 2>/dev/null || true
 }
 
@@ -62,30 +63,56 @@ _start_splash() {
 
     # Le binaire splash (hardlink Electron avec son propre resources/app.asar) doit exister
     if [ ! -x "$splash_bin" ]; then
-        return 0
+        echo "[auto-update] splash:$splash_bin inexécutable, pas de splash" >&2
+        return 1
+    fi
+
+    # Sous Wayland (Fedora Kinoite), Electron nécessite parfois Ozone
+    # pour afficher une fenêtre sans serveur X.
+    local ozone_flags=""
+    if [ -n "${WAYLAND_DISPLAY:-}" ]; then
+        ozone_flags="--enable-features=UseOzonePlatform --ozone-platform=wayland"
     fi
 
     # Créer le FIFO avant de lancer la splash
     rm -f "$SPLASH_FIFO"
-    mkfifo "$SPLASH_FIFO" 2>/dev/null || return 0
+    mkfifo "$SPLASH_FIFO" 2>/dev/null || {
+        echo "[auto-update] Impossible de créer le FIFO $SPLASH_FIFO" >&2
+        return 1
+    }
 
     # Lancer la splash en arrière-plan (non bloquant)
     # Le binaire Electron (hardlink) charge son propre resources/app.asar splash.
     # --no-sandbox car on est dans un AppImage sans user namespaces garantis
-    "$splash_bin" --no-sandbox "$SPLASH_FIFO" >/dev/null 2>&1 &
+    "$splash_bin" --no-sandbox $ozone_flags "$SPLASH_FIFO" >/dev/null 2>&1 &
     SPLASH_PID=$!
 
     # Ouvrir le FIFO en lecture-écriture (non bloquant) pour garder la splash en vie
-    exec 3<>"$SPLASH_FIFO" 2>/dev/null || true
+    exec 3<>/dev/null 2>/dev/null || true
+
+    # Attendre que la splash soit prête à recevoir des messages (max 3s)
+    local waited=0
+    while [ ! -p "$SPLASH_FIFO" ] && [ $waited -lt 30 ]; do
+        sleep 0.1
+        waited=$((waited + 1))
+    done
+
+    return 0
 }
 
 _close_splash() {
     if [ -n "$SPLASH_PID" ]; then
+        # Attendre que la splash ait traité tous les messages (important pour FileZilla-like)
+        sleep 0.5
+
         # Fermer le fd du FIFO → la splash détecte la fin et se ferme
         exec 3>&- 2>/dev/null || true
-        # Attendre un peu que la splash se ferme proprement
+        sleep 0.2
+
+        # SIGTERM d'abord, puis SIGKILL si nécessaire
+        kill -TERM "$SPLASH_PID" 2>/dev/null || true
         sleep 0.3
-        kill "$SPLASH_PID" 2>/dev/null || true
+        kill -KILL "$SPLASH_PID" 2>/dev/null || true
         rm -f "$SPLASH_FIFO"
         SPLASH_PID=""
     fi
@@ -94,7 +121,8 @@ _close_splash() {
 # Trap pour toujours fermer la splash en sortie
 trap _close_splash EXIT
 
-_start_splash
+# ── Lancement de la splash ──
+_start_splash || echo "[auto-update] Splash non démarrée" >&2
 _send_splash '{"status":"Vérification des mises à jour…"}'
 
 echo "[auto-update] Nouvelle version disponible ($REMOTE_VERSION)..."
@@ -140,7 +168,7 @@ if [ "$UPDATED" = "1" ]; then
     echo "$REMOTE_VERSION" > "$CACHE_FILE"
     # Marker avec PID pour éviter les collisions entre instances
     touch /tmp/hermes-desktop-updated-$$
-    _close_splash
+    sleep 1  # Laisser la splash afficher "Redémarrage…"
     exit 0
 fi
 
